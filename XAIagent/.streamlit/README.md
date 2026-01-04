@@ -1,53 +1,36 @@
 # Streamlit Configuration
 
-This directory contains configuration files for Streamlit deployment.
+## Local Development
 
-## Files
-
-### `secrets.toml.template`
-Template for secrets configuration. **DO NOT commit `secrets.toml` with real keys!**
-
-For local development:
+**1. Copy template:**
 ```bash
 cp secrets.toml.template secrets.toml
-# Edit secrets.toml with your real API keys
 ```
 
-### For Streamlit Cloud Deployment
-
-1. **Login to Streamlit Cloud**: https://share.streamlit.io
-2. **Deploy your app** (if not already deployed)
-3. **Add Secrets**:
-   - Go to your app dashboard
-   - Click the three dots (⋮) menu → **Settings** → **Secrets**
-   - Paste this configuration:
-
+**2. Add your OpenAI API key to `secrets.toml`:**
 ```toml
-OPENAI_API_KEY = "sk-proj-YOUR-REAL-KEY-HERE"
+OPENAI_API_KEY = "sk-proj-YOUR-KEY-HERE"
 OPENAI_MODEL = "gpt-4o-mini"
-HICXAI_GENAI = "on"
-HICXAI_OPENAI_MODEL = "gpt-4o-mini"
-HICXAI_TEMPERATURE = "0.7"
-HICXAI_MAX_TOKENS = "100"
-GITHUB_TOKEN = "ghp_YOUR-GITHUB-TOKEN"
-GITHUB_REPO = "https://github.com/yourusername/hicxai-data-private.git"
-HICXAI_VERSION = "v0"
-HICXAI_DEBUG_MODE = "false"
 ```
 
-4. **Click "Save"** - Your app will automatically restart
+⚠️ **Never commit `secrets.toml`** - it's already in `.gitignore`
 
-## Important Notes
+## Streamlit Cloud Deployment
 
-- **`secrets.toml`** is in `.gitignore` - it will never be committed
-- Streamlit Cloud reads secrets from the dashboard UI, not from the repo
-- The app code accesses secrets via `st.secrets["KEY_NAME"]`
-- Our `env_loader.py` already handles `st.secrets` fallback automatically
+**Add secrets via dashboard:**
+1. Go to https://share.streamlit.io
+2. Open your app → Settings → Secrets
+3. Add:
+```toml
+OPENAI_API_KEY = "sk-proj-YOUR-KEY-HERE"
+OPENAI_MODEL = "gpt-4o-mini"
+```
 
-## Testing Locally
+## Configuration Files
 
-To test with secrets locally:
-```bash
+- `config.toml` - UI theme settings
+- `secrets.toml.template` - Template for API keys
+- `secrets.toml` - Your actual keys (gitignored)
 # Create secrets file
 cp .streamlit/secrets.toml.template .streamlit/secrets.toml
 

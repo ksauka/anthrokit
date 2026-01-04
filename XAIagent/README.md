@@ -1,147 +1,99 @@
-# XAI Loan Assistant - Anthropomorphism Research Study
+# XAIagent: AnthroKit Framework Validation Study
 
-Research implementation for studying anthropomorphic design in XAI systems using AnthroKit.
+**Implementation of loan pre-assessment chatbot for validating the AnthroKit personality-adaptive anthropomorphism framework.**
+
+## Overview
+
+This directory contains the validation study implementation for the AnthroKit framework paper. The study uses a loan application scenario to test whether personality-adaptive anthropomorphism improves user experience.
+
+## Study Design
+
+**Within-subjects (N=20-30):**
+- **Condition 1**: Low Anthropomorphism (fixed warmth~0.3)
+- **Condition 2**: High Anthropomorphism (fixed warmth~0.7)
+- **Condition 3**: Personality-Adapted (warmth adjusted by TIPI scores)
+
+**Measures:**
+- Social Presence Scale (Gefen & Straub, 2004)
+- Trust in AI system
+- Satisfaction ratings
 
 ## Project Structure
 
 ```
 XAIagent/
-├── src/                    # Application source code
-│   ├── app.py             # Main Streamlit application
-│   ├── loan_assistant.py  # Loan assessment logic
-│   ├── natural_conversation.py  # LLM integration
-│   ├── ab_config.py       # Experiment configuration
-│   ├── app_v0.py          # Entry point: v0 (minimal)
-│   ├── app_v1.py          # Entry point: v1 (full features)
-│   └── app_condition_*.py # Entry points for specific conditions
-│
-├── config/                 # Configuration files
-│   ├── anthrokit.py       # AnthroKit helper (legacy)
-│   ├── system_prompt*.txt # System prompts
-│   └── developer_prompt.txt
-│
-├── data/                   # Datasets
-├── models/                 # Trained models (pickled)
-├── assets/                 # UI assets (images, avatars)
-├── logs/                   # Experiment logs
-├── feedback/               # User feedback data
-│
-├── tests/                  # Test suite
-│   ├── test_integration.py
-│   ├── test_validation_messages.py
-│   └── ...
-│
-├── scripts/                # Utility scripts
-│   ├── deployment/        # Deployment scripts
-│   └── test_all_conditions.sh
-│
-├── docs/                   # Documentation
-│   ├── README.md          # Project overview
-│   ├── DEPLOYMENT_GUIDE.md
-│   ├── ANTHROPOMORPHISM_OPERATIONALIZATION.md
-│   └── ...
-│
-├── environments/           # Conda environment configs
-│   ├── environment.yml
-│   └── environment_rtx5070.yml
-│
-├── .streamlit/            # Streamlit configuration
-├── .github/               # GitHub workflows
-├── .huggingface/          # HuggingFace config
-│
-├── requirements.txt       # Python dependencies
-├── runtime.txt           # Python version (Streamlit Cloud)
-└── packages.txt          # System packages
+├── src/
+│   ├── app_v1.py              # High anthropomorphism app
+│   ├── app_condition_5.py     # Low anthropomorphism app
+│   ├── loan_assistant.py      # Loan assessment logic
+│   └── natural_conversation.py # LLM integration
+├── config/
+│   ├── system_prompt_high.txt # HighA system prompt
+│   └── system_prompt_low.txt  # LowA system prompt
+├── data/
+│   └── adult.data             # Census income dataset
+├── models/                     # Trained classifiers
+└── assets/                     # UI resources
 ```
 
 ## Setup
 
-### 1. Install AnthroKit Package
-
-From the project root:
+**1. Install AnthroKit package:**
 ```bash
 cd /home/kudzy/Projects/AnthroKit
 pip install -e .
 ```
 
-### 2. Install XAI Dependencies
-
+**2. Install dependencies:**
 ```bash
 cd XAIagent
 pip install -r requirements.txt
 ```
 
-### 3. Configure Environment
-
-Copy `.env.example` to `.env` and set your OpenAI API key:
+**3. Configure environment:**
 ```bash
 cp .env.example .env
-# Edit .env and add OPENAI_API_KEY=your_key_here
+# Add your OPENAI_API_KEY to .env
 ```
 
-## Running the Application
+## Running Study Conditions
 
-### Run Specific Condition
-
+**High Anthropomorphism (Condition 1):**
 ```bash
-# High anthropomorphism, full features (v1)
-ANTHROKIT_ANTHRO=high streamlit run src/app_v1.py
-
-# Low anthropomorphism, minimal features (v0)
-ANTHROKIT_ANTHRO=low streamlit run src/app_v0.py
-
-# Custom condition
-ANTHROKIT_EXPLANATION=counterfactual ANTHROKIT_ANTHRO=high streamlit run src/app.py
+streamlit run src/app_v1.py
 ```
 
-### Test All Conditions
-
+**Low Anthropomorphism (Condition 2):**
 ```bash
-bash scripts/test_all_conditions.sh
+streamlit run src/app_condition_5.py
 ```
 
-## Experiment Conditions
+**Personality-Adapted (Condition 3):**
+- Collects TIPI survey at start
+- Applies personality-based adjustments via `apply_personality_to_preset()`
+- Uses same base app as Condition 1
 
-3 × 2 factorial design:
-- **Explanation**: none | counterfactual | feature_importance
-- **Anthropomorphism**: low | high
+## Data Collection
 
-## Development
+**Session tracking:**
+- Personality traits (TIPI scores)
+- Applied preset configuration
+- User interactions and outcomes
+- Logged to `data/session_tracking.jsonl`
 
-### Run Tests
+**Outcome measures:**
+- Social presence (5-point scale)
+- Trust ratings
+- Satisfaction ratings
 
-```bash
-cd XAIagent
-pytest tests/
-```
+## Key Dependencies
 
-### Code Style
-
-Follows PEP8 with 100-character line limit:
-```bash
-black --line-length 100 src/
-flake8 src/ --max-line-length=100
-```
-
-## Deployment
-
-### Streamlit Cloud
-
-See [docs/STREAMLIT_CLOUD_SETUP.md](docs/STREAMLIT_CLOUD_SETUP.md)
-
-### HuggingFace Spaces
-
-See [docs/HUGGINGFACE_DEPLOYMENT.md](docs/HUGGINGFACE_DEPLOYMENT.md)
-
-## Dependencies
-
-- **AnthroKit**: Core anthropomorphism design system (installed from parent directory)
-- **Streamlit**: Web application framework
-- **OpenAI**: LLM integration for natural conversation
+- **AnthroKit**: Core framework (personality module, presets)
+- **Streamlit**: Web application
+- **OpenAI GPT-4**: Natural language generation
+- **scikit-learn**: Loan classification model
 - **SHAP**: Feature importance explanations
-- **DiCE**: Counterfactual explanations
-- **scikit-learn**: ML models
 
-## License
+## Related Files
 
-MIT License - See LICENSE file for details
+See parent [README.md](../README.md) for AnthroKit framework overview.
