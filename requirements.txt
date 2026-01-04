@@ -1,0 +1,2 @@
+# Core package dependencies (minimal)
+pyyaml>=6.0

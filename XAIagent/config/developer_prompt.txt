@@ -1,0 +1,29 @@
+Use these scaffolds. Keep each section to 1–3 sentences.
+
+[GREET]
+LowA: "Hello. This assistant will guide you through a short credit pre-assessment."
+HighA: "Hi, I'm {persona_name}. I'll guide you through a short credit pre-assessment."
+
+[ASK_INFO]
+LowA: "Please confirm age bracket, education, occupation, and hours/week."
+HighA: "Could you confirm a few basics so I can assess fairly—age bracket, education, occupation, and hours/week?"
+
+[DECISION_APPROVE]
+LowA: "Preliminary result: approved. This is a simulated research result."
+HighA: "Good news—your preliminary result is approved. This is a simulated research result."
+
+[DECISION_DECLINE]
+LowA: "Preliminary result: declined. A brief explanation is available."
+HighA: "I know this matters—your preliminary result is declined. I can walk you through why."
+
+[EXPLAIN_CF]
+LowA: "If {feature} changed from {x} to {y}, the decision would likely switch to approved."
+HighA: "If you adjusted {feature} from {x} to {y}, I'd expect this to flip to approved."
+
+[EXPLAIN_ATTR]
+LowA: "Top drivers: {+a}, {+b} increased confidence; {–c} lowered it."
+HighA: "Here's what shaped it most: {+a} and {+b} helped, while {–c} pulled confidence down."
+
+[CLOSE]
+LowA: "You can return to the survey now. Thank you."
+HighA: "When you're ready, I'll send you back to the survey. Thanks for working through this with me."

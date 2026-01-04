@@ -1,0 +1,11 @@
+streamlit>=1.31.0
+pandas>=2.2.0
+numpy>=2.0.0
+scikit-learn>=1.5.0
+matplotlib>=3.8.0
+shap>=0.45.0
+anchor-exp>=0.0.2
+Dice-ML>=0.10.0
+graphviz>=0.20.3
+dtreeviz>=2.2.2
+openai>=1.0.0
