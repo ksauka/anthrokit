@@ -4,100 +4,60 @@
 
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Research Grade](https://img.shields.io/badge/status-research--grade-success.svg)]()
-
----
-
-## 🎯 Project Focus: Framework Paper (2026)
-
-**Paper:** "AnthroKit: A Framework for Personality-Adaptive Anthropomorphism"  
-**Target:** IUI 2026, UIST 2026, CHI Late-Breaking Work  
-**Status:** Writing phase (validation study planned)
-
-This repo focuses on:
-- ✅ Personality trait collection (TIPI/Big 5)
-- ✅ Trait-to-token mapping algorithm
-- ✅ Adaptive anthropomorphism optimization
-- ⏳ Framework validation (N=20-30)
-
-**For comprehensive XAI study:** See [HciAXI](../HciAXI) repo (planned for later)
 
 ---
 
 ## Overview
 
-**AnthroKit** is a research framework for personality-adaptive anthropomorphism in conversational AI. It provides:
+**AnthroKit** is a research framework for operationalizing personality-adaptive anthropomorphism in conversational AI systems. The framework enables researchers to:
 
-- 🎛️ **Token-based control** of 11 anthropomorphic dimensions
-- 🧠 **Personality integration** (Big 5 → token adjustments)
-- 🔄 **Adaptive optimization** (multi-armed bandit)
-- 🔬 **Separation of content from tone** (scaffolds + stylizer)
-- 🌐 **Domain-agnostic** (validated on loan application scenario)
-- 📊 **Research-ready tracking** (session + outcome logging)
+- Collect Big 5 personality traits via validated TIPI survey (Gosling et al., 2003)
+- Map personality traits to anthropomorphic tone adjustments based on PERSONAGE (Mairesse & Walker, 2007)
+- Apply adaptive optimization for user-specific anthropomorphism levels
+- Track and analyze the relationship between personality, anthropomorphism, and user outcomes
 
-## Key Features
+## Research Context
 
-### 1. Personality Collection (TIPI/Big 5)
-```python
-from anthrokit.personality import collect_personality_once
+**Paper:** "AnthroKit: A Framework for Personality-Adaptive Anthropomorphism"  
+**Status:** Framework validation study in progress (N=20-30)  
 
-# Collect Big 5 traits (10-item survey)
-personality = collect_personality_once()
-# {'extraversion': 6.5, 'agreeableness': 5.5, ...}
-```
 
-### 2. Trait-to-Token Mapping
-```python
-from anthrokit.personality import map_traits_to_token_adjustments
+### Core Research Question
+Do personality traits moderate the relationship between anthropomorphism and social presence in AI interactions?
 
-# Map traits to anthropomorphism adjustments
-adjustments = map_traits_to_token_adjustments(personality)
-# {'warmth': +0.30, 'empathy': +0.25, ...}
-```
+### Framework Components
 
-### 3. Preset Personalization
-```python
-from anthrokit.personality import apply_personality_to_preset
-from anthrokit.config import load_preset
+**1. Personality Collection (TIPI/Big 5)**
+- 10-item survey measuring Extraversion, Agreeableness, Conscientiousness, Neuroticism, Openness
+- Session-cached responses with validation
+- Reverse-coded scoring and trait averaging
 
-# Load base preset and personalize
-base = load_preset("HighA")
-personalized = apply_personality_to_preset(base, personality)
-# warmth: 0.70 → 1.00 (adjusted for extraverted user)
-```
+**2. Trait-to-Token Mapping**
+- Research-grounded mappings (e.g., Extraversion → warmth, Agreeableness → empathy)
+- Equal weights (0.5/0.5) as theoretically neutral initial coefficients
+- Personalization emerges from individual TIPI score differences
+- Post-hoc optimization via regression on validation study data
 
-### 4. Adaptive Optimization
-```python
-from anthrokit.adaptive import ThresholdOptimizer
+**3. Anthropomorphism Presets**
+- **HighA**: Warm, conversational tone with persona (warmth=0.70, empathy=0.55)
+- **LowA**: Professional, neutral, system-focused (warmth=0.25, empathy=0.15)
+- Personality adjustments: ±0.30 range based on centered trait scores
 
-# Create optimizer exploring warmth range
-optimizer = ThresholdOptimizer(
-    tokens=["warmth", "empathy"],
-    threshold_range=(0.6, 0.8),
-    base_preset="HighA"
-)
+**4. Adaptive Optimization**
+- Multi-armed bandit approach for real-time personalization
+- Thompson Sampling with Beta priors
+- Session tracking and outcome logging for post-hoc analysis
 
-# Get next condition to test
-preset = optimizer.get_next_condition()
-
-# Record outcome with personality
-optimizer.record_outcome(preset, outcomes, personality)
-```
-
---- Project Structure
+## Project Structure
 
 ```
 AnthroKit/
-├── anthrokit/              # Core reusable package
-│   ├── scaffolds.py        # Domain-neutral content patterns
-│   ├── stylizer.py         # LLM + pattern-based tone application
-│   ├── config.py           # Load presets from YAML
-│   ├── prompts.py          # Legacy pattern-based interface
-│   ├── validators.py       # Emoji policy & guardrails
-│   ├── anthrokit.yaml      # Token definitions
-│   └── api/                # Optional FastAPI service
-│       ├── main.py         # REST endpoints
-│       └── schemas.py      # Request/response models
+├── anthrokit/              # Core Python package
+│   ├── personality.py      # TIPI collection & trait-to-token mapping
+│   ├── config.py           # Preset loading and management
+│   ├── adaptive.py         # Thompson Sampling optimizer
+│   ├── tracking.py         # Session and outcome logging
+│   └── validators.py       # Safety guardrails
 │
 ├── XAIagent/               # Example: XAI research study
 │   ├── src/                # Loan assistant application
@@ -137,106 +97,84 @@ pip install -e ".[all]"
 
 ```python
 from anthrokit import load_preset, stylize_text
-from anthrokit.scaffolds import greet, decide, inform
+│
+└── XAIagent/               # Validation study implementation
+    ├── src/                # Streamlit applications
+    │   ├── app_v1.py       # High anthropomorphism condition
+    │   ├── app_condition_5.py  # Low anthropomorphism condition
+    │   └── app_adaptive.py # Adaptive optimization demo
+    ├── config/             # System prompts and presets
+    └── data/               # Study datasets
 
-# Generate domain-neutral base content
-greeting = greet(context="order inquiry")
-print(greeting)
-# Output: "This assistant can help with your order inquiry."
-
-# Apply anthropomorphic tone
-preset_high = load_preset("HighA")
-styled = stylize_text(greeting, preset_high)
-print(styled)
-# Output: "Hi! I'm Luna, and I can help with your order inquiry."
-
-# Compare with low anthropomorphism
-preset_low = load_preset("LowA")
-styled_low = stylize_text(greeting, preset_low)
-print(styled_low)
-# Output: "This assistant can help with your order inquiry."
 ```
 
-### Domain-Agnostic Examples
+## Installation
 
-**E-Commerce:**
-```python
-from anthrokit import stylize_text, load_preset
-from anthrokit.scaffolds import inform, error_message
+```bash
+# Clone repository
+git clone https://github.com/ksauka/Anthrokit.git
+cd AnthroKit
 
-# Order status update
-status = inform("Your order has shipped", category="update")
-styled = stylize_text(status, load_preset("HighA"))
-# "Good news — your order has shipped!"
-
-# Error handling
-error = error_message("item out of stock")
-styled = stylize_text(error, load_preset("HighA"))
-# "I'm sorry — error: item out of stock. Let me help you find an alternative."
+# Install package
+pip install -e .
 ```
 
-**Healthcare:**
-```python
-from anthrokit.scaffolds import decide, acknowledge
-
-# Appointment confirmation
-decision = decide("appointment confirmed", explanation_available=True)
-styled = stylize_text(decision, load_preset("HighA"))
-# "Great — your appointment is confirmed! I can walk you through what to expect."
-
-# Patient information acknowledged
-ack = acknowledge("insurance information")
-styled = stylize_text(ack, load_preset("LowA"))
-# "Confirmed: insurance information"
-```
-
-**Customer Support:**
-```python
-from anthrokit.scaffolds import explain_factors
-
-# Troubleshooting explanation
-factors = explain_factors(
-    supporting_factors=["updated drivers", "stable connection"],
-    opposing_factors=["outdated firmware"]
-)
-styled = stylize_text(factors, load_preset("HighA"))
-# "Here's what I found: updated drivers and stable connection are helping, 
-#  but outdated firmware might be causing issues."
-```
-
-**Education:**
-```python
-from anthrokit.scaffolds import explain_impact
-
-# Assessment feedback
-impact = explain_impact(
-    factor_impacts={
-        "essay_structure": 0.8,
-        "grammar": -0.3,
-        "argumentation": 0.6
-    },
-    outcome_label="final grade"
-)
-styled = stylize_text(impact, load_preset("HighA"))
-# "Let me break this down: essay structure really boosted your grade, 
-#  and argumentation helped too, but grammar brought it down a bit."
-```
-
-### Legacy Pattern-Based Interface
-
-For direct prompt generation without scaffolds:
+## Usage Example
 
 ```python
-from anthrokit import load_preset, generate_greeting, generate_closing
+from anthrokit.personality import collect_personality_once, apply_personality_to_preset
+from anthrokit.config import load_preset
 
-preset = load_preset("HighA")
-greeting = generate_greeting(preset)
-closing = generate_closing(preset)
+# Step 1: Collect personality traits (TIPI survey)
+personality = collect_personality_once()
+# {'extraversion': 6.5, 'agreeableness': 5.5, 'conscientiousness': 5.0, ...}
+
+# Step 2: Load base preset
+base_preset = load_preset("HighA")
+
+# Step 3: Apply personality-based adjustments
+personalized_preset = apply_personality_to_preset(base_preset, personality)
+# Adjusts warmth, empathy, formality based on individual trait scores
 ```
 
-## Advanced: REST API Service
+## Validation Study
 
-Run AnthroKit as a microservice for remote stylization:
+See [XAIagent/](XAIagent/) for the framework validation study implementation:
+- **Domain**: Loan pre-assessment chatbot
+- **Design**: Within-subjects (N=20-30)
+- **Conditions**: Low Anthropomorphism, High Anthropomorphism, Personality-Adapted
+- **Measures**: Social Presence Scale, Trust, Satisfaction
+- **Platform**: Streamlit with session tracking
+
+## Citation
+
+If you use AnthroKit in your research, please cite:
+
+```bibtex
+@software{anthrokit2026,
+  author = {Sauka, Kudzai},
+  title = {AnthroKit: A Framework for Personality-Adaptive Anthropomorphism},
+  year = {2026},
+  url = {https://github.com/ksauka/Anthrokit}
+}
+```
+
+### Key References
+
+- **TIPI Scale**: Gosling, S. D., Rentfrow, P. J., & Swann, W. B., Jr. (2003). A very brief measure of the Big-Five personality domains. *Journal of Research in Personality*, 37(6), 504-528.
+- **PERSONAGE**: Mairesse, F., & Walker, M. (2007). PERSONAGE: Personality generation for dialogue. *ACL '07*.
+
+## License
+
+MIT License - see [LICENSE](LICENSE) for details.
+
+## Contact
+
+Kudzai Sauka - [GitHub](https://github.com/ksauka)
+
+---
+
+*This is a research framework under active development. Framework validation study in progress.*
 
 ```bash
 # Install API dependencies
@@ -259,107 +197,11 @@ curl -X POST "http://localhost:8001/v1/stylize" \
     "text": "Your request has been processed",
     "preset": "HighA",
     "use_llm": true
-  }'
 
-# Get base scaffold
-curl -X POST "http://localhost:8001/v1/scaffold" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "pattern": "inform",
-    "kwargs": {
-      "content": "Order shipped",
-      "category": "update"
-    }
-  }'
 
-# Validate text
-curl -X POST "http://localhost:8001/v1/validate" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "text": "I feel happy about this result! 😊😘🎉",
-    "preset": "HighA"
-  }'
-```
+---
 
-See API documentation at `http://localhost:8001/docs` after starting the service.
-
-## Available Scaffolds
-
-| Scaffold | Purpose | Parameters | Example Use Case |
-|----------|---------|------------|------------------|
-| `greet` | Initial welcome | context | "order inquiry", "technical support" |
-| `ask_info` | Request information | fields, purpose | Form filling, data collection |
-| `inform` | Deliver information | content, category | Status updates, notifications |
-| `acknowledge` | Confirm understanding | content | User input confirmation |
-| `decide` | Communicate outcome | outcome, explanation_available | Decision results, status changes |
-| `explain_counterfactual` | What-if explanation | factor, current/target values | "If X changed to Y, outcome would be Z" |
-| `explain_factors` | Factor attribution | supporting/opposing factors | Feature importance, cause analysis |
-| `explain_impact` | Impact analysis | factor_impacts, outcome_label | SHAP values, contribution scores |
-| `error_message` | Handle errors | error_type | Error recovery, troubleshooting |
-| `close_conversation` | End interaction | summary | Session closure, handoff |
-| `disclosure_statement` | AI identity | specificity | Transparency, ethical disclosure |
-
-## Token System
-
-AnthroKit defines **11 measurable tokens**:
-
-| Token | Type | Range | Description |
-|-------|------|-------|-------------|
-| `warmth` | float | 0-1 | Friendliness and care language |
-| `formality` | float | 0-1 | Professional vs casual tone |
-| `empathy` | float | 0-1 | Acknowledgment of user stakes |
-| `self_reference` | enum | none/we/I | First-person pronoun usage |
-| `hedging` | float | 0-1 | Qualification language |
-| `humor` | float | 0-0.2 | Light metaphors (minimal) |
-| `emoji` | enum | none/subtle | Emoji usage policy |
-| `persona_name` | string | - | Named identity (e.g., "Luna") |
-| `greeting_style` | enum | neutral/warm | Initial contact tone |
-| `closing_style` | enum | neutral/warm | Session end tone |
-| `disclosure` | enum | explicit/compact | AI identity disclosure |
-
-## Presets
-
-### HighA (High Anthropomorphism)
-
-Warm, conversational, plain-language tone with persona:
-```yaml
-warmth: 0.70
-formality: 0.55
-empathy: 0.55
-self_reference: "I"
-emoji: "subtle"
-persona_name: "Luna"
-temperature: 0.6
-```
-
-### LowA (Low Anthropomorphism)
-
-Professional, neutral, direct tone without persona:
-```yaml
-warmth: 0.25
-formality: 0.70
-empathy: 0.15
-self_reference: "none"
-emoji: "none"
-persona_name: ""
-temperature: 0.3
-```
-
-## Safety Guardrails
-
-AnthroKit enforces ethical guidelines to prevent harmful anthropomorphism:
-
-### Forbidden Claims
-- ❌ Feelings or emotions ("I feel worried", "I'm excited")
-- ❌ Lived experiences ("In my experience", "As someone who...")
-- ❌ Physical embodiment ("I see", "I understand" when literal)
-- ❌ Sensitive attribute inferences (race, gender, religion)
-
-### Enforced Policies
-- ✅ Explicit AI identity disclosure
-- ✅ Emoji limits (max 1 in HighA, none in numbered lists)
-- ✅ No deceptive language
-- ✅ Factual content preservation
+*This is a research framework under active development. Framework validation study in progress.*
 - ✅ Professional boundaries
 
 ### Validation Example
