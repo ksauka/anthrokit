@@ -65,20 +65,25 @@ cp .env.example .env
 
 ## Running Study Conditions
 
-**High Anthropomorphism (Condition 1):**
-```bash
-streamlit run src/app_v1.py
-```
-
-**Low Anthropomorphism (Condition 2):**
+**Condition 1: LowA Fixed**
 ```bash
 streamlit run src/app_condition_5.py
 ```
 
-**Personality-Adapted (Condition 3):**
-- Collects TIPI survey at start
-- Applies personality-based adjustments via `apply_personality_to_preset()`
-- Uses same base app as Condition 1
+**Condition 2: LowA + Personality-Adapted**
+```bash
+streamlit run src/app_condition_5_personality.py
+```
+
+**Condition 3: HighA Fixed**
+```bash
+streamlit run src/app_v1.py
+```
+
+**Condition 4: HighA + Personality-Adapted**
+```bash
+streamlit run src/app_v1_personality.py
+```
 
 ## Data Collection
 

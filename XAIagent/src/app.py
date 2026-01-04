@@ -534,39 +534,25 @@ if st.session_state.agent is None:
 agent = st.session_state.agent
 answers = st.session_state.answers
 
-# Initialize loan assistant
-if 'loan_assistant' not in st.session_state:
-    st.session_state.loan_assistant = LoanAssistant(agent)
-    st.session_state.chat_history = []
-
 # ===== PERSONALITY-BASED PERSONALIZATION =====
-# Optional feature: collect personality traits for personalized experience
-from anthrokit.personality import collect_personality_once, get_personality_from_session
+# Check if personality adaptation is required by environment variable
+from anthrokit.personality import get_personality_from_session, save_personality_to_session, BIG_5_ITEMS
 
-# Show personality survey option in sidebar
-st.sidebar.header("👤 Personalization")
-st.sidebar.markdown("""Personalize your experience based on your personality traits.""")
+personality_required = os.getenv("PERSONALITY_ADAPTATION", "disabled") == "enabled"
 
-enable_personality = st.sidebar.checkbox(
-    "Enable personality-based customization",
-    value=False,
-    help="Complete a short 10-item personality survey to personalize the assistant's communication style",
-    key="enable_personality_checkbox"
-)
-
-if enable_personality:
+if personality_required:
     personality = get_personality_from_session()
     
     if not personality:
-        # Show survey
+        # Mandatory personality survey before proceeding
+        st.title("🏦 AI Loan Assistant - Credit Pre-Assessment")
+        st.markdown("---")
         st.info("📋 Please complete this brief personality survey to personalize your experience.")
         
         with st.form("personality_form"):
             st.markdown("""### Brief Personality Survey
             
 Rate yourself on these traits (1 = Disagree strongly, 7 = Agree strongly):""")
-            
-            from anthrokit.personality import BIG_5_ITEMS
             
             responses = {}
             for trait, items in BIG_5_ITEMS.items():
@@ -599,20 +585,19 @@ Rate yourself on these traits (1 = Disagree strongly, 7 = Agree strongly):""")
                     for trait, scores in trait_scores.items()
                 }
                 
-                from anthrokit.personality import save_personality_to_session
                 save_personality_to_session(personality)
                 
                 st.success("✅ Personality profile saved! The assistant will now adapt to your preferences.")
                 st_rerun()
         
-        st.stop()  # Don't show main app until survey complete
-    else:
-        st.sidebar.success("✅ Personality profile active")
-        with st.sidebar.expander("Your trait scores"):
-            for trait, score in personality.items():
-                st.metric(trait.title(), f"{score:.1f}/7")
+        st.stop()  # Block main app until survey complete
 
 # ===== END PERSONALITY SECTION =====
+
+# Initialize loan assistant
+if 'loan_assistant' not in st.session_state:
+    st.session_state.loan_assistant = LoanAssistant(agent)
+    st.session_state.chat_history = []
 
 # App header
 st.title("🏦 AI Loan Assistant - Credit Pre-Assessment")

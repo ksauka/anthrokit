@@ -1,11 +1,12 @@
-"""Entry point for Condition 5: E_feature_importance_A_low (Adaptive)
-Explanation: feature_importance | Anthropomorphism: low (explores 0.2-0.4)"""
+"""Entry point for LowA Fixed condition
+Anthropomorphism: Low (warmth=0.25 fixed)
+Explanation: feature_importance
+Personality: None (fixed preset)
+"""
 import os, sys, streamlit as st
 os.environ['ANTHROKIT_EXPLANATION'] = 'feature_importance'
 os.environ['ANTHROKIT_ANTHRO'] = 'low'
-os.environ['ADAPTIVE_MODE'] = 'enabled'
-os.environ['ADAPTIVE_RANGE_MIN'] = '0.2'
-os.environ['ADAPTIVE_RANGE_MAX'] = '0.4'
-os.environ['ADAPTIVE_TOKENS'] = 'warmth,empathy'
+os.environ['ADAPTIVE_MODE'] = 'disabled'
+os.environ['PERSONALITY_ADAPTATION'] = 'disabled'
 sys.path.append('src')
 exec(open('src/app.py').read())
