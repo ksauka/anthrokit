@@ -8,12 +8,19 @@ This directory contains the validation study implementation for the AnthroKit fr
 
 ## Study Design
 
-**Within-subjects (N=20-30):**
-- **Condition 1**: Low Anthropomorphism (fixed warmth~0.3)
-- **Condition 2**: High Anthropomorphism (fixed warmth~0.7)
-- **Condition 3**: Personality-Adapted (warmth adjusted by TIPI scores)
+**2×2 Within-subjects (N=20-30):**
 
-**Measures:**
+**Independent Variables:**
+- **Anthropomorphism**: Low (warmth=0.25) vs High (warmth=0.70)
+- **Personality Adaptation**: Fixed vs Personality-Adapted (TIPI-based adjustments ±0.30)
+
+**4 Conditions:**
+1. Low Anthropomorphism + Fixed preset
+2. Low Anthropomorphism + Personality-Adapted
+3. High Anthropomorphism + Fixed preset
+4. High Anthropomorphism + Personality-Adapted
+
+**Dependent Measures:**
 - Social Presence Scale (Gefen & Straub, 2004)
 - Trust in AI system
 - Satisfaction ratings
