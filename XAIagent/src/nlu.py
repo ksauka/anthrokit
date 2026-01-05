@@ -34,14 +34,22 @@ class NLU:
                 try:
                     import torch
                     device = "cuda" if torch.cuda.is_available() else "cpu"
-                except Exception:
-                    device = "cpu"
-                # Lightweight, fast model for semantic similarity
-                self.model = SentenceTransformer('all-MiniLM-L6-v2', device=device)
-                print(f"✅ Loaded sentence-transformers model on {device}")
-                # Pre-compute embeddings for all questions
-                self.question_embeddings = self.model.encode(self.questions, convert_to_numpy=True, show_progress_bar=False)
-                print(f"✅ Pre-computed embeddings for {len(self.questions)} questions")
+                    
+                    # Fix for PyTorch 2.x meta tensor issue
+                    # Load model to CPU first, then move to device if needed
+                    self.model = SentenceTransformer('all-MiniLM-L6-v2', device='cpu')
+                    if device == "cuda":
+                        self.model = self.model.to(device)
+                    
+                    print(f"✅ Loaded sentence-transformers model on {device}")
+                    # Pre-compute embeddings for all questions
+                    self.question_embeddings = self.model.encode(self.questions, convert_to_numpy=True, show_progress_bar=False)
+                    print(f"✅ Pre-computed embeddings for {len(self.questions)} questions")
+                    
+                except Exception as e:
+                    print(f"⚠️ Failed to load sentence-transformers: {e}")
+                    print("⚠️ Falling back to SimCSE...")
+                    self.model_type = "simcse"
 
         # Optional SimCSE fallback for legacy envs
         if self.model_type == "simcse" or (model_type == "sentence_transformers" and not SENTENCE_TRANSFORMERS_AVAILABLE):
