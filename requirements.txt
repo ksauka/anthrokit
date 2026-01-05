@@ -11,3 +11,6 @@ dtreeviz>=2.2.2
 openai>=1.0.0
 pyyaml>=6.0.0
 sentence-transformers>=2.2.0
+
+# Install AnthroKit package from repository root
+-e .
