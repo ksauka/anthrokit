@@ -1099,16 +1099,17 @@ if current_state == 'complete' and len(st.session_state.chat_history) > 5:
             }
             
             # ===== ANTHROKIT RESEARCH DATA COLLECTION =====
-            # Record outcomes with personality and adaptive optimization data
+            # Record outcomes with complete treatment documentation
             try:
+                import os
                 from anthrokit.personality import get_personality_from_session
                 from anthrokit.tracking import track_session_end
                 
-                personality = get_personality_from_session()
+                personality_traits = get_personality_from_session()
                 
-                # Build outcomes dictionary
+                # Build outcomes dictionary (optional - usually collected in Qualtrics)
                 outcomes = {
-                    "social_presence": rating,  # Using overall rating as proxy for social presence
+                    "social_presence": rating,  # Using overall rating as proxy
                     "trust": would_recommend,
                     "satisfaction": ease_of_use,
                     "explanation_clarity": explanation_clarity,
@@ -1120,35 +1121,49 @@ if current_state == 'complete' and len(st.session_state.chat_history) > 5:
                     config.optimizer.record_outcome(
                         preset=config.current_condition,
                         outcomes=outcomes,
-                        personality=personality
+                        personality=personality_traits
                     )
                     print(f"📊 Recorded outcome with adaptive optimizer")
                 
-                # Record with session tracker
-                preset_config = config.current_condition or {
+                # Build final tone config
+                final_config = config.current_condition or {
                     "warmth": config.warmth,
                     "empathy": config.empathy,
                     "formality": config.formality,
+                    "hedging": getattr(config, 'hedging', 0.45),
                     "self_reference": config.self_reference,
-                    "emoji": config.emoji_style
+                    "emoji": config.emoji_style,
+                    "temperature": config.temperature
                 }
                 
+                # Determine condition label
+                anthro_level = config.anthro  # "high" or "low"
+                personality_mode = os.getenv("PERSONALITY_ADAPTATION", "disabled")
+                condition_label = f"{config.anthro_preset}_{personality_mode}"
+                
+                # Record with session tracker (COMPLETE TREATMENT DOCUMENTATION)
                 track_session_end(
-                    session_id=config.session_id,
+                    # Outcomes (optional - usually in Qualtrics)
                     outcomes=outcomes,
-                    personality=personality,
-                    preset_config=preset_config,
-                    metadata={
-                        "condition": config.anthro,
-                        "version": config.version,
-                        "adaptive_mode": config.adaptive_mode,
-                        "conversation_length": len(st.session_state.chat_history)
-                    }
+                    feedback=None,
+                    
+                    # Treatment documentation (ESSENTIAL)
+                    personality_traits=personality_traits,
+                    base_preset=getattr(config, 'base_preset', {}),
+                    personality_adjustments=getattr(config, 'personality_adjustments', {}),
+                    final_tone_config=final_config,
+                    
+                    # Condition metadata
+                    condition_label=condition_label,
+                    anthropomorphism_level=anthro_level,
+                    personality_adaptation=personality_mode
                 )
-                print(f"📊 Recorded session outcome with tracking system")
+                print(f"📊 Logged treatment: {condition_label}, warmth={final_config.get('warmth'):.2f}, empathy={final_config.get('empathy'):.2f}")
                 
             except Exception as e:
                 print(f"⚠️ Failed to record research outcomes: {e}")
+                import traceback
+                traceback.print_exc()
                 # Don't block user if research tracking fails
             
             # ===== END RESEARCH DATA COLLECTION =====

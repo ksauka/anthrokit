@@ -81,19 +81,39 @@ class AppConfig:
             from anthrokit.config import AnthroKitConfig
             from anthrokit.personality import (
                 get_personality_from_session,
-                apply_personality_to_preset
+                apply_personality_to_preset,
+                map_traits_to_token_adjustments
             )
             
             # Load base preset
-            preset = load_preset(self.anthro_preset)
+            base_preset = load_preset(self.anthro_preset)
+            
+            # Store base preset for logging (BEFORE adjustments)
+            self.base_preset = base_preset.copy()
             
             # Check for personality-based personalization
             personality = get_personality_from_session()
             if personality:
-                preset = apply_personality_to_preset(preset, personality)
+                # Calculate adjustments
+                self.personality_adjustments = map_traits_to_token_adjustments(personality)
+                
+                # Apply adjustments
+                preset = apply_personality_to_preset(base_preset, personality)
                 print(f"🧠 Applied personality-based adjustments to {self.anthro_preset} preset")
+            else:
+                # No personality adjustments
+                self.personality_adjustments = {
+                    "warmth": 0.0,
+                    "empathy": 0.0,
+                    "formality": 0.0,
+                    "hedging": 0.0
+                }
+                preset = base_preset.copy()
             
-            # Load base preset values
+            # Store final config for logging (AFTER adjustments)
+            self.final_tone_config = preset.copy()
+            
+            # Load final preset values into config
             self.emoji_style = preset.get("emoji", "none")
             self.temperature = preset.get("temperature", 0.6 if self.show_anthropomorphic else 0.3)
             self.persona_name = preset.get("persona_name", "Luna" if self.show_anthropomorphic else "")

@@ -152,25 +152,39 @@ def track_interaction(
 def track_session_end(
     outcomes: Optional[Dict[str, float]] = None,
     feedback: Optional[Dict[str, Any]] = None,
-    personality: Optional[Dict[str, float]] = None
+    personality_traits: Optional[Dict[str, float]] = None,
+    base_preset: Optional[Dict[str, Any]] = None,
+    personality_adjustments: Optional[Dict[str, float]] = None,
+    final_tone_config: Optional[Dict[str, Any]] = None,
+    condition_label: Optional[str] = None,
+    anthropomorphism_level: Optional[str] = None,
+    personality_adaptation: Optional[str] = None
 ):
-    """Track the end of a user session with outcomes.
+    """Track the end of a user session with complete treatment documentation.
+    
+    This logs the TREATMENT (what AnthroKit delivered), not outcomes.
+    Outcomes are measured separately in Qualtrics and linked via session_id.
     
     Args:
-        outcomes: Outcome metrics (social_presence, trust, satisfaction, etc.)
-                  MUST include 'social_presence' as primary metric
-        feedback: Additional user feedback
-        personality: Big 5 personality traits
+        outcomes: Optional outcome metrics (if collected in-app)
+        feedback: Optional user feedback
+        personality_traits: Raw TIPI Big 5 scores (1-7 scale)
+        base_preset: Original preset BEFORE personality adjustments
+        personality_adjustments: Computed deltas from trait-to-token mapping
+        final_tone_config: ACTUAL tone values used (base + adjustments)
+        condition_label: Human-readable condition (e.g., "HighA_Adapted")
+        anthropomorphism_level: "high" or "low"
+        personality_adaptation: "enabled" or "disabled"
         
     Example:
         track_session_end(
-            outcomes={
-                "social_presence": 4.1,  # PRIMARY
-                "trust": 4.2,
-                "satisfaction": 3.8
-            },
-            personality={'openness': 5.5, 'extraversion': 4.2, ...},
-            feedback={"comments": "Very helpful explanation"}
+            personality_traits={'extraversion': 6.5, 'agreeableness': 5.5, ...},
+            base_preset={'warmth': 0.70, 'empathy': 0.55, ...},
+            personality_adjustments={'warmth': +0.30, 'empathy': +0.17, ...},
+            final_tone_config={'warmth': 0.85, 'empathy': 0.72, ...},
+            condition_label="HighA_Adapted",
+            anthropomorphism_level="high",
+            personality_adaptation="enabled"
         )
     """
     if 'session_tracking' not in st.session_state:
@@ -182,14 +196,24 @@ def track_session_end(
         "event": "session_end",
         "session_id": session_id,
         "user_id": st.session_state.get('user_id'),
-        "app_name": st.session_state.session_tracking.get('app_name'),
-        "preset_name": st.session_state.session_tracking.get('preset_name'),
-        "preset_config": st.session_state.session_tracking.get('preset_config'),
-        "outcomes": outcomes or {},
-        "feedback": feedback or {},
-        "personality": personality,
         "timestamp": datetime.now().isoformat(),
-        "duration_seconds": _calculate_session_duration()
+        "duration_seconds": _calculate_session_duration(),
+        
+        # Experimental condition
+        "condition_label": condition_label or st.session_state.session_tracking.get('preset_name'),
+        "anthropomorphism_level": anthropomorphism_level,
+        "personality_adaptation": personality_adaptation,
+        "app_version": st.session_state.session_tracking.get('app_name'),
+        
+        # Treatment documentation (what AnthroKit delivered)
+        "personality_traits": personality_traits or {},
+        "base_preset": base_preset or st.session_state.session_tracking.get('preset_config'),
+        "personality_adjustments": personality_adjustments or {},
+        "final_tone_config": final_tone_config or st.session_state.session_tracking.get('preset_config'),
+        
+        # Optional: outcomes if collected in-app (usually in Qualtrics instead)
+        "outcomes": outcomes or {},
+        "feedback": feedback or {}
     }
     
     _append_to_log(record)
