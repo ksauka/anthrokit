@@ -36,8 +36,25 @@ FORBIDDEN_PHRASES = [
     r"\bas\s+someone\s+who\b",
 ]
 
-# Allowed subtle emojis for HighA
-ALLOWED_EMOJIS = {"🙂", "✅", "✓", "→", "•"}
+# Allowed subtle emojis for HighA (professional/formal only)
+ALLOWED_EMOJIS = {
+    # Check marks and status
+    "✅", "✓", "☑️", "✔️", 
+    # Neutral faces
+    "🙂", "😊",
+    # Arrows and navigation
+    "→", "←", "↑", "↓", "➡️", "⬅️", "⬆️", "⬇️", "↔️",
+    # Bullets and separators
+    "•", "·", "◦", "▪️", "▫️",
+    # Numbers and indicators
+    "①", "②", "③", "④", "⑤", "⑥", "⑦", "⑧", "⑨", "⑩",
+    # Information symbols
+    "ℹ️", "❗", "❓", "⚠️", "📌", "📍",
+    # Professional icons
+    "📄", "📁", "📊", "📈", "📉", "💼", "🏦", "💳", "📝", "🔍",
+    # Basic symbols
+    "⭐", "★", "◆", "◇", "■", "□", "●", "○",
+}
 
 # Banned emojis (excessive warmth/informality)
 BANNED_EMOJIS = {"😂", "😘", "🔥", "💖", "🎉", "✨", "😍", "🤣"}
