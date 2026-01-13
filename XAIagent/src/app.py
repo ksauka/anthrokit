@@ -1215,6 +1215,10 @@ if current_state == 'complete' and len(st.session_state.chat_history) > 5:
             # Log feedback to data logger
             if logger:
                 logger.set_feedback(feedback_data)
+                # Save complete session data to GitHub
+                logger_saved = logger.save_to_github()
+                if not logger_saved:
+                    print("⚠️ Failed to save session log to GitHub")
             
             # Save feedback
             try:

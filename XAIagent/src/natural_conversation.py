@@ -529,8 +529,8 @@ def enhance_response(response: str, context: Optional[Dict[str, Any]] = None,
         # Try to get personality-adjusted preset
         preset = None
         try:
-            from XAIagent.src.ab_config import config
-            preset = config.final_tone_config
+            from ab_config import config
+            preset = getattr(config, 'final_tone_config', None)
         except (ImportError, AttributeError):
             pass  # Fall back to hardcoded logic
         
