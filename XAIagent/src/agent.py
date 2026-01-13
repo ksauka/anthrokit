@@ -83,49 +83,66 @@ class Agent:
         self.data['feature_names'] = self.data['features']
         self.data['map'] = {}
 
-    @st.cache_resource(show_spinner="Loading AI model...")
-    def _load_or_train_model(_self):
-        """Load or train the classifier model (cached across all users).
-        
-        Uses @st.cache_resource to cache the trained model in memory.
-        Only trains once per deployment, shared across all user sessions.
-        """
-        model_dir = os.path.join(os.path.dirname(__file__), '..', 'models')
-        os.makedirs(model_dir, exist_ok=True)
-        model_path = os.path.join(model_dir, 'RandomForest.pkl')
-        
-        if os.path.exists(model_path):
-            try:
-                print(f"✅ Loading cached model from {model_path}")
-                return pickle.load(open(model_path, 'rb'))
-            except Exception as e:
-                print(f"⚠️ Failed to load model ({e}). Training new model...")
-        
-        # Train new model (200 trees for optimal accuracy)
-        print("🔄 Training new RandomForest model (200 trees)...")
-        from preprocessing import preprocess_adult
-        df = pd.concat([_self.data['X_display'], _self.data['y_display']], axis=1)
-        df_clean = preprocess_adult(df)
-        X = df_clean.drop('income', axis=1)
-        y = df_clean['income']
-        from sklearn.ensemble import RandomForestClassifier
-        clf = RandomForestClassifier(n_estimators=200, random_state=42, n_jobs=-1)
-        clf.fit(X, y)
-        
-        # Save for next deployment
-        try:
-            with open(model_path, 'wb') as f:
-                pickle.dump(clf, f)
-            print(f"✅ Model saved to {model_path}")
-        except Exception as e:
-            print(f"⚠️ Could not save model: {e}")
-        
-        return clf
-    
     def train_model(self):
         """Initialize the classifier using cached model loading."""
-        self.clf = self._load_or_train_model()
+        self.clf = _load_or_train_model()
         self.clf_display = self.clf
+
+
+# Module-level cached function (shared across all Agent instances)
+@st.cache_resource(show_spinner="Loading AI model...")
+def _load_or_train_model():
+    """Load or train the classifier model (cached across all users).
+    
+    Uses @st.cache_resource to cache the trained model in memory.
+    Only trains once per deployment, shared across all user sessions.
+    """
+    model_dir = os.path.join(os.path.dirname(__file__), '..', 'models')
+    os.makedirs(model_dir, exist_ok=True)
+    model_path = os.path.join(model_dir, 'RandomForest.pkl')
+    
+    if os.path.exists(model_path):
+        try:
+            print(f"✅ Loading cached model from {model_path}")
+            return pickle.load(open(model_path, 'rb'))
+        except Exception as e:
+            print(f"⚠️ Failed to load model ({e}). Training new model...")
+    
+    # Train new model (200 trees for optimal accuracy)
+    print("🔄 Training new RandomForest model (200 trees)...")
+    from load_adult_data import load_adult_data
+    from preprocessing import preprocess_adult
+    
+    # Load data
+    data_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'adult.data')
+    columns = [
+        'age', 'workclass', 'fnlwgt', 'education', 'education_num', 'marital_status',
+        'occupation', 'relationship', 'race', 'sex', 'capital_gain', 'capital_loss',
+        'hours_per_week', 'native_country', 'income'
+    ]
+    import pandas as pd
+    X_display = pd.read_csv(data_path, names=columns, skipinitialspace=True)
+    y_display = X_display['income']
+    X_display = X_display.drop(['income'], axis=1)
+    
+    # Preprocess and train
+    df = pd.concat([X_display, y_display], axis=1)
+    df_clean = preprocess_adult(df)
+    X = df_clean.drop('income', axis=1)
+    y = df_clean['income']
+    from sklearn.ensemble import RandomForestClassifier
+    clf = RandomForestClassifier(n_estimators=200, random_state=42, n_jobs=-1)
+    clf.fit(X, y)
+    
+    # Save for next deployment
+    try:
+        with open(model_path, 'wb') as f:
+            pickle.dump(clf, f)
+        print(f"✅ Model saved to {model_path}")
+    except Exception as e:
+        print(f"⚠️ Could not save model: {e}")
+    
+    return clf
 
     # (Removed duplicate __init__; initialization handled above)
 
