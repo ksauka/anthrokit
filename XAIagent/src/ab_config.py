@@ -199,6 +199,23 @@ class AppConfig:
         self.formality = 0.55 if self.show_anthropomorphic else 0.7
         self.empathy = 0.55 if self.show_anthropomorphic else 0.15
         self.self_reference = "I" if self.show_anthropomorphic else "none"
+        
+        # CRITICAL: Set final_tone_config for natural_conversation.py
+        self.final_tone_config = {
+            "emoji": self.emoji_style,
+            "temperature": self.temperature,
+            "persona_name": self.persona_name,
+            "warmth": self.warmth,
+            "formality": self.formality,
+            "empathy": self.empathy,
+            "self_reference": self.self_reference,
+            "hedging": 0.45
+        }
+        
+        # Set empty personality tracking
+        self.base_preset = self.final_tone_config.copy()
+        self.personality_adjustments = {}
+        self.self_reference = "I" if self.show_anthropomorphic else "none"
         self.optimizer = None
         self.current_condition = None
         

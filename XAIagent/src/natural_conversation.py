@@ -526,15 +526,26 @@ def enhance_response(response: str, context: Optional[Dict[str, Any]] = None,
         return response
 
     try:
-        # Try to get personality-adjusted preset
+        # Get personality-adjusted preset from config (with robust fallback)
         preset = None
         try:
             from ab_config import config
             preset = getattr(config, 'final_tone_config', None)
         except (ImportError, AttributeError):
-            pass  # Fall back to hardcoded logic
+            pass
         
-        # Build system prompt (personality-driven if preset available)
+        # Fallback: construct minimal preset if config unavailable
+        if preset is None:
+            preset = {
+                "self_reference": "I" if high_anthropomorphism else "none",
+                "warmth": 0.70 if high_anthropomorphism else 0.25,
+                "empathy": 0.65 if high_anthropomorphism else 0.20,
+                "formality": 0.30 if high_anthropomorphism else 0.75,
+                "hedging": 0.45,
+                "emoji": "subtle" if high_anthropomorphism else "none"
+            }
+        
+        # Build system prompt with AnthroKit
         sys_prompt = _build_system_prompt(preset=preset, high_anthropomorphism=high_anthropomorphism)
         ctx_lines = []
         if context:
