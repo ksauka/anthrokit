@@ -277,8 +277,8 @@ def handle_meta_question(field: str, user_input: str, preset: Optional[Dict[str,
         # Get preset if not provided
         if preset is None:
             try:
-                from XAIagent.src.ab_config import config
-                preset = config.final_tone_config
+                from ab_config import config
+                preset = getattr(config, 'final_tone_config', None)
             except (ImportError, AttributeError):
                 # Fallback: construct minimal preset from high_anthropomorphism flag
                 preset = {"self_reference": "I" if high_anthropomorphism else "none"}
@@ -361,8 +361,8 @@ def enhance_validation_message(field: str, user_input: str, expected_format: str
         # Get preset if not provided
         if preset is None:
             try:
-                from XAIagent.src.ab_config import config
-                preset = config.final_tone_config
+                from ab_config import config
+                preset = getattr(config, 'final_tone_config', None)
             except (ImportError, AttributeError):
                 preset = {"self_reference": "I" if high_anthropomorphism else "none"}
         
@@ -444,8 +444,8 @@ def generate_from_data(data: Dict[str, Any], explanation_type: str = "shap",
         # Get preset if not provided
         if preset is None:
             try:
-                from XAIagent.src.ab_config import config
-                preset = config.final_tone_config
+                from ab_config import config
+                preset = getattr(config, 'final_tone_config', None)
             except (ImportError, AttributeError):
                 preset = {"self_reference": "I" if high_anthropomorphism else "none"}
         
