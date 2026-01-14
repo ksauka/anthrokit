@@ -371,7 +371,7 @@ if 'interaction_logger' not in st.session_state:
     st.session_state.interaction_logger = create_logger_from_secrets(st.secrets, logger_config)
     st.session_state.interaction_logger.condition_name = condition_name
     
-    # Add compatibility method for old logger API
+    # Add compatibility methods for old data_logger API
     def log_interaction_compat(interaction_type: str, content: Dict):
         """Compatibility wrapper for old data_logger API"""
         logger_inst = st.session_state.interaction_logger
@@ -386,7 +386,35 @@ if 'interaction_logger' not in st.session_state:
             logger_inst._temp_data = {}
         logger_inst._temp_data[interaction_type] = content
     
+    def update_application_data_compat(field: str, value):
+        """Compatibility wrapper"""
+        pass  # Not needed for our new logger
+    
+    def set_prediction_compat(prediction: str, probability: float):
+        """Compatibility wrapper"""
+        pass  # Not needed for our new logger
+    
+    def set_feedback_compat(feedback_data: Dict):
+        """Compatibility wrapper for feedback"""
+        logger_inst = st.session_state.interaction_logger
+        if not hasattr(logger_inst, '_feedback'):
+            logger_inst._feedback = feedback_data
+    
+    def build_final_data_compat():
+        """Compatibility wrapper"""
+        return {}  # Not needed for our new logger
+    
+    def save_to_github_compat():
+        """Compatibility wrapper - save is done in end_session()"""
+        pass
+    
     st.session_state.interaction_logger.log_interaction = log_interaction_compat
+    st.session_state.interaction_logger.update_application_data = update_application_data_compat
+    st.session_state.interaction_logger.set_prediction = set_prediction_compat
+    st.session_state.interaction_logger.set_feedback = set_feedback_compat
+    st.session_state.interaction_logger.build_final_data = build_final_data_compat
+    st.session_state.interaction_logger.save_to_github = save_to_github_compat
+    
     print(f"[App] Initialized logger for condition: {condition_name}")
 
 logger = st.session_state.interaction_logger
@@ -896,7 +924,7 @@ with st.form("chat_form", clear_on_submit=True):
     with col1:
         user_message = st.text_input("Message to Luna", key="user_input", placeholder=placeholder_text, label_visibility="collapsed")
     with col2:
-        send_button = st.form_submit_button("Send", use_container_width=True)
+        send_button = st.form_submit_button("Send", width="stretch")
 
 # Add helper text for clickable features
 if current_field and current_field in field_options:
@@ -946,7 +974,7 @@ if current_field and current_field in field_options:
                     button_text = f"✨ {friendly_option}"
                     button_type = "secondary"
                 
-                if st.button(button_text, key=f"option_top_{current_field}_{option}", use_container_width=True, type=button_type):
+                if st.button(button_text, key=f"option_top_{current_field}_{option}", width="stretch", type=button_type):
                     st.session_state.option_clicked = option
                     st_rerun()
     
@@ -1063,14 +1091,14 @@ elif current_state == 'complete':
     if config.show_counterfactual and config.show_anthropomorphic:
         col1, col2 = st.columns(2)
         with col1:
-            if st.button("Explain Decision", key="quick_explain", use_container_width=True):
+            if st.button("Explain Decision", key="quick_explain", width="stretch"):
                 if logger:
                     logger.log_interaction("explanation_request", {"type": "decision_explanation"})
                 response = st.session_state.loan_assistant.handle_message("explain")
                 st.session_state.chat_history.append(("explain", response))
                 st_rerun()
         with col2:
-            if st.button("🔧 What If Analysis", key="quick_whatif", use_container_width=True):
+            if st.button("🔧 What If Analysis", key="quick_whatif", width="stretch"):
                 # Turn on What‑if Lab and prompt guidance
                 try:
                     st.session_state.loan_assistant.show_what_if_lab = True
@@ -1081,7 +1109,7 @@ elif current_state == 'complete':
                 st_rerun()
     else:
         # Show only Explain button for other conditions
-        if st.button("Explain Decision", key="quick_explain", use_container_width=True):
+        if st.button("Explain Decision", key="quick_explain", width="stretch"):
             if logger:
                 logger.log_interaction("explanation_request", {"type": "decision_explanation"})
             response = st.session_state.loan_assistant.handle_message("explain")
@@ -1135,7 +1163,7 @@ if current_state == 'collecting_info' and hasattr(st.session_state.loan_assistan
                         button_text = f"✨ {friendly_option}"
                         button_type = "secondary"
                     
-                    if st.button(button_text, key=f"option_{current_field}_{option}", use_container_width=True, type=button_type):
+                    if st.button(button_text, key=f"option_{current_field}_{option}", width="stretch", type=button_type):
                         st.session_state.option_clicked = option
                         st_rerun()
         
@@ -1338,7 +1366,7 @@ if current_state == 'complete' and len(st.session_state.chat_history) > 5:
         
         elapsed_time = time.time() - st.session_state.get("start_time", time.time())
         if elapsed_time >= 120:  # 2 minutes minimum engagement
-            if st.button("📋 Continue to Survey", type="primary", use_container_width=True, key="return_to_qualtrics"):
+            if st.button("📋 Continue to Survey", type="primary", width="stretch", key="return_to_qualtrics"):
                 back_to_survey(done_flag=True)
         else:
             remaining = int(120 - elapsed_time)
@@ -1426,7 +1454,7 @@ if st.session_state.get("return_raw"):
             m, s = divmod(remaining, 60)
             st.caption(f"⏱️ Up to {m}:{s:02d} remaining. You can return anytime.")
         with col_b:
-            if st.button("✅ Continue to survey", type="primary", use_container_width=True, key="footer_return"):
+            if st.button("✅ Continue to survey", type="primary", width="stretch", key="footer_return"):
                 back_to_survey()
     else:
         # Show countdown until button appears

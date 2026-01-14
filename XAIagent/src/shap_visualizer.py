@@ -242,7 +242,7 @@ def display_shap_explanation(explanation_result):
             impacts_df = pd.DataFrame({
                 'Feature Impact': explanation_result['feature_impacts']
             })
-            st.dataframe(impacts_df, use_container_width=True)
+            st.dataframe(impacts_df, width="stretch")
         except Exception as e:
             st.error(f"Error displaying feature impacts table: {str(e)}")
 

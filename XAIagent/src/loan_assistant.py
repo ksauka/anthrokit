@@ -437,6 +437,10 @@ class LoanAssistant:
             return self._restart_application()
         elif self._is_xai_query(user_input):
             return self._handle_explanation(user_input)
+        # Handle acknowledgments and farewells gracefully
+        elif any(phrase in user_lower for phrase in ['thank', 'thanks', 'bye', 'goodbye', 'ok', 'okay', 'got it', 'understood', 'great', 'perfect', 'good']):
+            return ("You're welcome! If you have any other questions about your loan decision, feel free to ask. "
+                   "Otherwise, say 'new' when you're ready to start a fresh application.")
         else:
             # Check if the application has been processed
             if self.application.loan_approved is None:
