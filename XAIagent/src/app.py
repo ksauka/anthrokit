@@ -373,18 +373,36 @@ if 'interaction_logger' not in st.session_state:
     
     # Add compatibility methods for old data_logger API
     def log_interaction_compat(interaction_type: str, content: Dict):
-        """Compatibility wrapper for old data_logger API"""
+        """Compatibility wrapper for old data_logger API - properly logs turns"""
         logger_inst = st.session_state.interaction_logger
         
-        # If this is the first interaction, start a turn
-        if not logger_inst.current_turn:
-            turn_type = "greet" if "greeting" in interaction_type.lower() else "collect"
-            logger_inst.start_turn(turn_type=turn_type)
+        # Handle user messages - start a new turn
+        if "user" in interaction_type.lower() or "message" in interaction_type.lower():
+            # End previous turn if exists
+            if logger_inst.current_turn:
+                logger_inst.end_turn()
+            
+            # Start new turn for user input
+            turn_type = "collect"  # Default to data collection
+            user_input = content.get("message", content.get("content", ""))
+            logger_inst.start_turn(turn_type=turn_type, user_input=user_input)
         
-        # Store interaction data (will be logged at end of turn)
-        if not hasattr(logger_inst, '_temp_data'):
-            logger_inst._temp_data = {}
-        logger_inst._temp_data[interaction_type] = content
+        # Handle assistant responses - log output to current turn
+        elif "assistant" in interaction_type.lower() or "response" in interaction_type.lower():
+            if logger_inst.current_turn:
+                response_text = content.get("response", content.get("message", ""))
+                logger_inst.log_output(response_text)
+                # End turn after assistant response
+                logger_inst.end_turn()
+        
+        # Handle other interaction types (clicks, requests, etc.)
+        else:
+            if not logger_inst.current_turn:
+                logger_inst.start_turn(turn_type="explain")
+            # Store interaction data
+            if not hasattr(logger_inst, '_temp_data'):
+                logger_inst._temp_data = {}
+            logger_inst._temp_data[interaction_type] = content
     
     def update_application_data_compat(field: str, value):
         """Compatibility wrapper"""
@@ -395,10 +413,11 @@ if 'interaction_logger' not in st.session_state:
         pass  # Not needed for our new logger
     
     def set_feedback_compat(feedback_data: Dict):
-        """Compatibility wrapper for feedback"""
+        """Compatibility wrapper for feedback - saves to session data"""
         logger_inst = st.session_state.interaction_logger
-        if not hasattr(logger_inst, '_feedback'):
-            logger_inst._feedback = feedback_data
+        # Add feedback to session data
+        logger_inst.session_data["feedback"] = feedback_data
+        print(f"✅ DEBUG: Feedback captured: {feedback_data}")
     
     def build_final_data_compat():
         """Compatibility wrapper"""
@@ -719,12 +738,40 @@ Rate yourself on these traits (1 = Disagree strongly, 7 = Agree strongly):""")
                 from ab_config import config
                 config.refresh_personality_adjustments()
                 
+                # Initialize logger session with personality data and Prolific ID
+                if 'interaction_logger' in st.session_state:
+                    prolific_id = st.session_state.get("prolific_pid", "unknown")
+                    logger = st.session_state.interaction_logger
+                    # Update participant ID with Prolific ID
+                    logger.participant_id = prolific_id
+                    logger.session_data["participant_id"] = prolific_id
+                    # Start session with condition and personality data
+                    condition_preset = "HighA" if anthro == "high" else "LowA"
+                    condition_adapt = (personality_required)
+                    logger.start_session(condition_preset, condition_adapt, personality)
+                    print(f"✅ DEBUG: Logger session started with personality: {personality}")
+                
                 st.success("✅ Personality profile saved! The assistant will now adapt to your preferences.")
                 st_rerun()
         
         st.stop()  # Block main app until survey complete
 
 # ===== END PERSONALITY SECTION =====
+
+# Initialize logger session if not already started
+if 'interaction_logger' in st.session_state and 'logger_session_started' not in st.session_state:
+    logger = st.session_state.interaction_logger
+    prolific_id = st.session_state.get("prolific_pid", "unknown")
+    logger.participant_id = prolific_id
+    logger.session_data["participant_id"] = prolific_id
+    
+    condition_preset = "HighA" if anthro == "high" else "LowA"
+    condition_adapt = personality_required
+    personality_scores = get_personality_from_session() if personality_required else {}
+    
+    logger.start_session(condition_preset, condition_adapt, personality_scores)
+    st.session_state.logger_session_started = True
+    print(f"✅ DEBUG: Logger session initialized - Condition: {condition_preset}, Adapt: {condition_adapt}")
 
 # Initialize loan assistant
 if 'loan_assistant' not in st.session_state:
