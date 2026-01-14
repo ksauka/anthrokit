@@ -64,6 +64,19 @@ anthrokit:
       default: "explicit"
       explicit_text: "I'm an AI assistant."
   presets:
+    NoA:
+      warmth: 0.00
+      formality: 0.85
+      empathy: 0.00
+      self_reference: "none"
+      hedging: 0.20
+      humor: 0
+      emoji: "none"
+      persona_name: ""
+      greeting_style: "neutral"
+      closing_style: "neutral"
+      disclosure: "explicit"
+      temperature: 0.1
     LowA:
       warmth: 0.25
       formality: 0.70

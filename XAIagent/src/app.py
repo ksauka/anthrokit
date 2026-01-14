@@ -347,10 +347,12 @@ import pandas as pd
 
 # Determine condition name based on environment variables
 # Map to user-friendly condition names for logging
-anthro = os.getenv("ANTHROKIT_ANTHRO", "high")  # high or low
+anthro = os.getenv("ANTHROKIT_ANTHRO", "high")  # none, low, or high
 personality = os.getenv("PERSONALITY_ADAPTATION", "disabled")  # enabled or disabled
 
 CONDITION_NAME_MAP = {
+    ("none", "enabled"): "nonanthropersonalized",
+    ("none", "disabled"): "nonanthrofixedperso",
     ("low", "enabled"): "lowanthropersonality",
     ("low", "disabled"): "lowanthrofixedperso",
     ("high", "enabled"): "highanthropersonalized",
@@ -786,7 +788,12 @@ Rate yourself on these traits (1 = Disagree strongly, 7 = Agree strongly):""")
                     }
                     
                     # Start session with condition, personality, and tone data
-                    condition_preset = "HighA" if anthro == "high" else "LowA"
+                    if anthro == "none":
+                        condition_preset = "NoA"
+                    elif anthro == "high":
+                        condition_preset = "HighA"
+                    else:
+                        condition_preset = "LowA"
                     condition_adapt = (personality_required)
                     logger.start_session(condition_preset, condition_adapt, personality, base_tone, final_tone)
                     
@@ -841,7 +848,12 @@ if 'interaction_logger' in st.session_state and 'logger_session_started' not in 
         "self_reference": config.self_reference
     }
     
-    condition_preset = "HighA" if anthro == "high" else "LowA"
+    if anthro == "none":
+        condition_preset = "NoA"
+    elif anthro == "high":
+        condition_preset = "HighA"
+    else:
+        condition_preset = "LowA"
     condition_adapt = personality_required
     personality_scores = get_personality_from_session() if personality_required else {}
     
@@ -865,33 +877,34 @@ if 'loan_assistant' not in st.session_state:
 # App header
 st.title("🏦 AI Loan Assistant - Credit Pre-Assessment")
 
-# Assistant Introduction (A/B testing)
-assistant_avatar = config.get_assistant_avatar()
-if assistant_avatar and os.path.exists(assistant_avatar):
-    import base64
-    with open(assistant_avatar, "rb") as f:
-        avatar_pic_b64 = base64.b64encode(f.read()).decode()
-    
-    st.markdown(f"""
-    <div class="luna-intro">
-        <img src="data:image/png;base64,{avatar_pic_b64}" alt="{config.assistant_name}">
-        <div>
-            <h3 style="margin: 0; color: white;">Hi! I'm {config.assistant_name}</h3>
-            <p style="margin: 5px 0 0 0; opacity: 0.9;">{config.assistant_intro}</p>
+# Assistant Introduction (only for high anthropomorphism)
+if anthro == "high":
+    assistant_avatar = config.get_assistant_avatar()
+    if assistant_avatar and os.path.exists(assistant_avatar):
+        import base64
+        with open(assistant_avatar, "rb") as f:
+            avatar_pic_b64 = base64.b64encode(f.read()).decode()
+        
+        st.markdown(f"""
+        <div class="luna-intro">
+            <img src="data:image/png;base64,{avatar_pic_b64}" alt="{config.assistant_name}">
+            <div>
+                <h3 style="margin: 0; color: white;">Hi! I'm {config.assistant_name}</h3>
+                <p style="margin: 5px 0 0 0; opacity: 0.9;">{config.assistant_intro}</p>
+            </div>
         </div>
-    </div>
-    """, unsafe_allow_html=True)
-else:
-    # Fallback without image
-    st.markdown(f"""
-    <div class="luna-intro">
-        <div style="width: 60px; height: 60px; border-radius: 50%; margin-right: 15px; border: 3px solid white; background: #f093fb; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 24px;">{config.assistant_name[0]}</div>
-        <div>
-            <h3 style="margin: 0; color: white;">Hi! I'm {config.assistant_name}</h3>
-            <p style="margin: 5px 0 0 0; opacity: 0.9;">{config.assistant_intro}</p>
+        """, unsafe_allow_html=True)
+    else:
+        # Fallback without image
+        st.markdown(f"""
+        <div class="luna-intro">
+            <div style="width: 60px; height: 60px; border-radius: 50%; margin-right: 15px; border: 3px solid white; background: #f093fb; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 24px;">{config.assistant_name[0]}</div>
+            <div>
+                <h3 style="margin: 0; color: white;">Hi! I'm {config.assistant_name}</h3>
+                <p style="margin: 5px 0 0 0; opacity: 0.9;">{config.assistant_intro}</p>
+            </div>
         </div>
-    </div>
-    """, unsafe_allow_html=True)
+        """, unsafe_allow_html=True)
 
 # Single conversational interface
 st.markdown("---")

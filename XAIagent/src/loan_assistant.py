@@ -238,7 +238,7 @@ class LoanAssistant:
             # High anthropomorphism: Warm, personal, conversational
             if any(keyword in user_input.lower() for keyword in greeting_keywords) or user_input.lower() in ['yes', 'y']:
                 self.conversation_state = ConversationState.COLLECTING_INFO
-                base_greeting = ("Hello! I'm Luna, your personal loan application assistant. 😊 I will process your information and provide you with your loan qualification results. If you have any questions about the results, feel free to ask!\n\n"
+                base_greeting = ("Welcome! This is Luna, your loan application assistant. 😊 I will process your information and provide you with your loan qualification results. If you have any questions about the results, feel free to ask!\n\n"
                        "**I will collect 10 pieces of information, one at a time:**\n"
                        "• Personal details (age, gender)\n"
                        "• Employment information (work type, occupation, hours)\n"
@@ -258,7 +258,7 @@ class LoanAssistant:
                 
                 return f"{base_greeting}\n\n{self._get_next_question()}"
             else:
-                base_prompt = ("Hi there! I'm Luna, your personal loan application assistant. 😊 I will process your information and provide you with your loan qualification results. If you have any questions about the results, feel free to ask!\n\n"
+                base_prompt = ("Hello! This is Luna, your loan application assistant. 😊 I will process your information and provide you with your loan qualification results. If you have any questions about the results, feel free to ask!\n\n"
                        "**I will collect 10 pieces of information, one at a time:**\n"
                        "• Personal details (age, gender)\n"
                        "• Employment information (work type, occupation, hours)\n"
@@ -281,7 +281,7 @@ class LoanAssistant:
             # Low anthropomorphism: Technical, concise, machine-like
             if any(keyword in user_input.lower() for keyword in greeting_keywords) or user_input.lower() in ['yes', 'y']:
                 self.conversation_state = ConversationState.COLLECTING_INFO
-                base_greeting = ("AI Loan Assistant initialized. I will collect your information and process your loan qualification.\n\n"
+                base_greeting = ("Welcome. This is the Loan Assistant for credit pre-assessment. Please provide the requested information to proceed with your evaluation.\n\n"
                        "**Information collection process (10 data points):**\n"
                        "• Personal data (age, gender)\n"
                        "• Employment data (work type, occupation, hours)\n"
@@ -302,7 +302,7 @@ class LoanAssistant:
                 
                 return f"{base_greeting}\n\n{self._get_next_question()}"
             else:
-                base_prompt = ("AI Loan Assistant system ready. I will collect your data and evaluate your loan qualification.\n\n"
+                base_prompt = ("This is the Loan Assistant for credit pre-assessment. Please provide the requested information to proceed with your evaluation.\n\n"
                        "**Data collection process (10 data points):**\n"
                        "• Personal data (age, gender)\n"
                        "• Employment data (work type, occupation, hours)\n"
@@ -680,9 +680,13 @@ class LoanAssistant:
             if value is None:
                 self.field_attempts[field] = self.field_attempts.get(field, 0) + 1
                 if self.field_attempts[field] >= 3:
+                    if self._is_v1():
+                        msg = f"I'm having trouble understanding your {field.replace('_', ' ')}. Let me provide some specific examples to help:\n\n{self._get_field_help(field)}\n\nOr you can say 'help' for more guidance."
+                    else:
+                        msg = f"Invalid input for {field.replace('_', ' ')}. Required format:\n\n{self._get_field_help(field)}\n\nEnter 'help' for additional guidance."
                     return {
                         'success': False,
-                        'message': f"I'm having trouble understanding your {field.replace('_', ' ')}. Let me provide some specific examples to help:\n\n{self._get_field_help(field)}\n\nOr you can say 'help' for more guidance."
+                        'message': msg
                     }
                 
                 # Provide context-specific help on second attempt
@@ -699,7 +703,10 @@ class LoanAssistant:
                 
                 # Use smart validation message instead of generic one
                 if self.field_attempts[field] >= 3:
-                    err = f"I'm having trouble understanding your {field.replace('_', ' ')}. Let me provide some specific examples to help:\n\n{self._get_field_help(field)}\n\nOr type **'?'** to see all valid options you can copy-paste!"
+                    if self._is_v1():
+                        err = f"I'm having trouble understanding your {field.replace('_', ' ')}. Let me provide some specific examples to help:\n\n{self._get_field_help(field)}\n\nOr type **'?'** to see all valid options you can copy-paste!"
+                    else:
+                        err = f"Invalid input for {field.replace('_', ' ')}. Required format:\n\n{self._get_field_help(field)}\n\nEnter **'?'** to display all valid options."
                 else:
                     err = self._get_smart_validation_message(field, user_input, self.field_attempts[field])
                 

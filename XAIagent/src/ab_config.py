@@ -28,7 +28,7 @@ import time
 import streamlit as st
 
 _VALID_EXPLANATIONS = {"none", "counterfactual", "feature_importance"}
-_VALID_ANTHRO       = {"low", "high"}
+_VALID_ANTHRO       = {"none", "low", "high"}
 
 
 class AppConfig:
@@ -55,12 +55,23 @@ class AppConfig:
         self.show_any_explanation   = (self.explanation != "none")
 
         # AnthroKit preset loader (using anthrokit package)
-        self.anthro_preset = "HighA" if self.show_anthropomorphic else "LowA"
+        if self.anthro == "none":
+            self.anthro_preset = "NoA"
+        elif self.anthro == "high":
+            self.anthro_preset = "HighA"
+        else:
+            self.anthro_preset = "LowA"
         self._load_anthrokit_preset()
 
         # assistant identity and copy are derived from anthropomorphism
         persona_name = getattr(self, 'persona_name', "")
-        self.assistant_name = persona_name if persona_name else ("Luna" if self.show_anthropomorphic else "AI Assistant")
+        if persona_name:
+            self.assistant_name = persona_name
+        elif self.anthro == "high":
+            self.assistant_name = "Luna"
+        else:
+            self.assistant_name = "Loan Assistant"
+        
         if self.show_anthropomorphic:
             self.assistant_intro = "Hi, I'm Luna—an AI assistant for credit pre-assessment. I'll guide you through a short check and explain the result if you'd like."
         else:
@@ -209,13 +220,33 @@ class AppConfig:
     
     def _set_fallback_anthrokit_values(self):
         """Set fallback AnthroKit values if yaml loading fails."""
-        self.emoji_style = "subtle" if self.show_anthropomorphic else "none"
-        self.temperature = 0.6 if self.show_anthropomorphic else 0.3
-        self.persona_name = "Luna" if self.show_anthropomorphic else ""
-        self.warmth = 0.7 if self.show_anthropomorphic else 0.25
-        self.formality = 0.55 if self.show_anthropomorphic else 0.7
-        self.empathy = 0.55 if self.show_anthropomorphic else 0.15
-        self.self_reference = "I" if self.show_anthropomorphic else "none"
+        if self.anthro == "high":
+            # HighA fallback
+            self.emoji_style = "subtle"
+            self.temperature = 0.6
+            self.persona_name = "Luna"
+            self.warmth = 0.7
+            self.formality = 0.55
+            self.empathy = 0.55
+            self.self_reference = "I"
+        elif self.anthro == "none":
+            # NoA fallback (zero anthropomorphism)
+            self.emoji_style = "none"
+            self.temperature = 0.1
+            self.persona_name = ""
+            self.warmth = 0.0
+            self.formality = 0.85
+            self.empathy = 0.0
+            self.self_reference = "none"
+        else:
+            # LowA fallback (low anthropomorphism)
+            self.emoji_style = "none"
+            self.temperature = 0.3
+            self.persona_name = ""
+            self.warmth = 0.25
+            self.formality = 0.7
+            self.empathy = 0.15
+            self.self_reference = "none"
         
         # CRITICAL: Set final_tone_config for natural_conversation.py
         self.final_tone_config = {
@@ -376,10 +407,10 @@ class AppConfig:
     def condition_code(self):
         """
         Compact code for logging and analysis.
-        Examples: E_none_A_low, E_cf_A_high, E_shap_A_high
+        Examples: E_none_A_none, E_none_A_low, E_cf_A_high, E_shap_A_high
         """
         e = {"none": "none", "counterfactual": "cf", "feature_importance": "shap"}[self.explanation]
-        a = {"low": "low", "high": "high"}[self.anthro]
+        a = {"none": "none", "low": "low", "high": "high"}[self.anthro]
         return f"E_{e}_A_{a}"
 
     def get_assistant_avatar(self):
