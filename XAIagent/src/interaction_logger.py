@@ -231,6 +231,19 @@ class InteractionLogger:
         
         # Note: Tone configuration should already be set in start_session
         
+        # Validate critical fields for calibration analysis
+        required_fields = [
+            "warmth_base", "warmth_final",
+            "empathy_base", "empathy_final", 
+            "formality_base", "formality_final",
+            "hedging_base", "hedging_final",
+            "temperature_base", "temperature_final",
+            "model_name", "condition_preset"
+        ]
+        missing = [f for f in required_fields if self.session_data.get(f) is None]
+        if missing:
+            print(f"⚠️ WARNING: Missing calibration fields: {', '.join(missing)}")
+        
         # Save final session log
         self._save_session(backup=False)
         
