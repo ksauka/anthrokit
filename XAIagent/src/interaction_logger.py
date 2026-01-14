@@ -5,32 +5,44 @@ Comprehensive logging for user sessions with personality-adapted AI assistants.
 Captures all data needed for analysis of temperature boost effectiveness and
 personality adaptation in real-world usage.
 
+Logs are pushed directly to GitHub private repo using GitHub API.
+Works in both local and Streamlit Cloud environments.
+
 Author: AnthroKit Research Team
 Date: January 14, 2026
 """
 
 import json
 import os
+import base64
 from datetime import datetime
 from typing import Dict, List, Optional, Any
 from pathlib import Path
 import uuid
+import requests
 
 
 class InteractionLogger:
-    """Logs user interaction data for Stage B analysis."""
+    """Logs user interaction data to GitHub private repo for Stage B analysis."""
     
-    def __init__(self, log_dir: str = None, participant_id: str = None):
+    def __init__(self, github_token: str = None, github_repo: str = None, participant_id: str = None):
         """
-        Initialize interaction logger.
+        Initialize interaction logger with GitHub API credentials.
         
         Args:
-            log_dir: Directory to save log files (default: ./interaction_logs/)
+            github_token: GitHub personal access token (from st.secrets or .env)
+            github_repo: GitHub repo URL (e.g., https://github.com/user/repo.git)
             participant_id: Unique participant ID (auto-generated if None)
         """
-        self.log_dir = log_dir or Path(__file__).parent.parent / "interaction_logs"
-        Path(self.log_dir).mkdir(parents=True, exist_ok=True)
+        self.github_token = github_token
+        self.github_repo = github_repo
         
+        # Parse repo path from URL
+        if github_repo:
+            self.repo_path = github_repo.replace("https://github.com/", "").replace(".git", "")
+        else:
+            self.repo_path = None
+            
         self.participant_id = participant_id or f"P{datetime.now().strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:6]}"
         self.session_id = f"S{datetime.now().strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:8]}"
         
@@ -208,17 +220,56 @@ class InteractionLogger:
         print(f"  Log saved: {self._get_log_path()}")
     
     def _save_session(self, backup: bool = False):
-        """Save session data to JSON file."""
+        """Save session data to GitHub private repo via API."""
+        if not self.github_token or not self.repo_path:
+            print("[InteractionLogger] Warning: GitHub credentials not configured. Skipping save.")
+            return
+            
         suffix = "_backup" if backup else ""
-        log_path = self._get_log_path(suffix)
-        
-        with open(log_path, 'w') as f:
-            json.dump(self.session_data, f, indent=2)
-    
-    def _get_log_path(self, suffix: str = "") -> Path:
-        """Get log file path."""
         filename = f"{self.session_id}{suffix}.json"
-        return Path(self.log_dir) / filename
+        
+        # File path in GitHub repo
+        file_path = f"interaction_logs/{filename}"
+        
+        # Prepare file content
+        file_content = json.dumps(self.session_data, indent=2)
+        file_content_encoded = base64.b64encode(file_content.encode()).decode()
+        
+        # GitHub API headers
+        headers = {
+            "Authorization": f"token {self.github_token}",
+            "Accept": "application/vnd.github.v3+json"
+        }
+        
+        # Create/update file via GitHub API
+        api_url = f"https://api.github.com/repos/{self.repo_path}/contents/{file_path}"
+        
+        # Check if file exists (for updates)
+        get_response = requests.get(api_url, headers=headers)
+        
+        commit_data = {
+            "message": f"{'Backup' if backup else 'Final'} log for session {self.session_id}",
+            "content": file_content_encoded,
+            "branch": "main"
+        }
+        
+        # If file exists, include SHA for update
+        if get_response.status_code == 200:
+            commit_data["sha"] = get_response.json()["sha"]
+        
+        # Push to GitHub
+        response = requests.put(api_url, headers=headers, json=commit_data)
+        
+        if response.status_code in [200, 201]:
+            print(f"[InteractionLogger] ✓ Log saved to GitHub: {file_path}")
+        else:
+            print(f"[InteractionLogger] ✗ Failed to save log: {response.status_code}")
+            print(f"  Error: {response.text[:200]}")
+    
+    def _get_log_path(self, suffix: str = "") -> str:
+        """Get log file path in GitHub repo."""
+        filename = f"{self.session_id}{suffix}.json"
+        return f"interaction_logs/{filename}"
     
     def get_session_summary(self) -> Dict:
         """Get summary statistics for current session."""
@@ -253,22 +304,30 @@ class InteractionLogger:
 # Helper Functions for Integration
 # ============================================================================
 
-def create_logger_from_config(config) -> InteractionLogger:
+def create_logger_from_secrets(secrets, config) -> InteractionLogger:
     """
-    Create logger from ab_config.
+    Create logger from Streamlit secrets and ab_config.
     
     Args:
+        secrets: Streamlit secrets (st.secrets) with GITHUB_TOKEN and GITHUB_REPO
         config: The ab_config module with condition settings
     
     Returns:
         Initialized InteractionLogger
     """
+    # Get GitHub credentials from secrets
+    github_token = secrets.get("GITHUB_TOKEN", None)
+    github_repo = secrets.get("GITHUB_REPO", None)
+    
     # Determine condition
     condition_preset = "HighA" if config.show_anthropomorphic else "LowA"
     condition_adapt = getattr(config, 'personality_adaptation_enabled', False)
     
-    # Create logger
-    logger = InteractionLogger()
+    # Create logger with GitHub credentials
+    logger = InteractionLogger(
+        github_token=github_token,
+        github_repo=github_repo
+    )
     
     # Get personality scores if available
     personality_scores = None
