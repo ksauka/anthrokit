@@ -1,170 +1,127 @@
-# AnthroKit: Personality-Adaptive Anthropomorphism Framework
-
-**A research framework for personality-driven anthropomorphic AI interactions.**
+# AnthroKit
 
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
----
+A research framework for personality-adaptive anthropomorphism in conversational AI systems.
 
 ## Overview
 
-**AnthroKit** is a research framework for operationalizing personality-adaptive anthropomorphism in conversational AI systems. The framework enables researchers to:
+AnthroKit enables researchers to systematically manipulate anthropomorphic design elements in AI interactions and study their effects on user experience. The framework supports:
 
-- Collect Big 5 personality traits via validated TIPI survey (Gosling et al., 2003)
-- Map personality traits to anthropomorphic tone adjustments based on PERSONAGE (Mairesse & Walker, 2007)
-- Apply adaptive optimization for user-specific anthropomorphism levels
-- Track and analyze the relationship between personality, anthropomorphism, and user outcomes
+- **Personality Assessment**: Big 5 trait collection via TIPI questionnaire
+- **Adaptive Anthropomorphism**: Dynamic tone adjustment based on personality profiles
+- **Experimental Control**: Fixed or personalized anthropomorphism conditions
+- **Interaction Logging**: Structured data collection for empirical analysis
 
-## Research Context
+## Key Features
 
-**Paper:** "AnthroKit: A Framework for Personality-Adaptive Anthropomorphism"  
-**Status:** Framework validation study in progress (N=20-30)  
+### Three Anthropomorphism Levels
+- **NoA** (None): Formal, system-focused (warmth=0.00, empathy=0.00, formality=0.85)
+- **LowA** (Low): Professional, minimal warmth (warmth=0.25, empathy=0.15, formality=0.70)
+- **HighA** (High): Conversational, personified (warmth=0.70, empathy=0.55, formality=0.55)
 
+### Personality-Based Personalization
+- Maps Big 5 traits to tone parameters (e.g., Extraversion → warmth, Agreeableness → empathy)
+- Applies bounded adjustments (±0.30) to base anthropomorphism presets
+- Maintains experimental validity through controlled personalization ranges
 
-### Core Research Question
-Do personality traits moderate the relationship between anthropomorphism and social presence in AI interactions?
+### Data Collection
+- Session-based interaction logging with GitHub API integration
+- Captures tone configurations, generation metadata, and user interactions
+- Supports prolific ID validation for online study deployment
 
-### Framework Components
+## Installation
 
-**1. Personality Collection (TIPI/Big 5)**
-- 10-item survey measuring Extraversion, Agreeableness, Conscientiousness, Neuroticism, Openness
-- Session-cached responses with validation
-- Reverse-coded scoring and trait averaging
+```bash
+git clone https://github.com/ksauka/Anthrokit.git
+cd AnthroKit
+pip install -e .
+```
 
-**2. Trait-to-Token Mapping**
-- Research-grounded mappings (e.g., Extraversion → warmth, Agreeableness → empathy)
-- Equal weights (0.5/0.5) as theoretically neutral initial coefficients
-- Personalization emerges from individual TIPI score differences
-- Post-hoc optimization via regression on validation study data
+## Quick Start
 
-**3. Anthropomorphism Presets**
-- **HighA**: Warm, conversational tone with persona (warmth=0.70, empathy=0.55)
-- **LowA**: Professional, neutral, system-focused (warmth=0.25, empathy=0.15)
-- Personality adjustments: ±0.30 range based on centered trait scores
+```python
+from anthrokit import load_preset
+from anthrokit.personality import apply_personality_to_preset
 
-**4. Adaptive Optimization**
-- Multi-armed bandit approach for real-time personalization
-- Thompson Sampling with Beta priors
-- Session tracking and outcome logging for post-hoc analysis
+# Load base preset
+base_preset = load_preset("HighA")
+
+# Apply personality adjustments (if personality data available)
+personality = {"extraversion": 0.8, "agreeableness": 0.6}
+final_preset = apply_personality_to_preset(base_preset, personality)
+
+# Use preset for LLM interaction
+print(f"Warmth: {final_preset['warmth']}")
+print(f"Empathy: {final_preset['empathy']}")
+```
 
 ## Project Structure
 
 ```
 AnthroKit/
-├── anthrokit/              # Core Python package
-│   ├── personality.py      # TIPI collection & trait-to-token mapping
-│   ├── config.py           # Preset loading and management
-│   ├── adaptive.py         # Thompson Sampling optimizer
-│   ├── tracking.py         # Session and outcome logging
-│   └── validators.py       # Safety guardrails
-│
-├── XAIagent/               # Example: XAI research study
-│   ├── src/                # Loan assistant application
-│   ├── data/               # Datasets
-│   ├── models/             # ML models
-│   ├── tests/              # Test suite
-│   └── docs/               # Study documentation
-│
-├── setup.py                # Package installation
-├── pyproject.toml          # Package metadata (PEP 517/518)
-└── README.md               # This file
+├── anthrokit/              # Core framework package
+│   ├── personality.py      # TIPI survey & trait mapping
+│   ├── config.py           # Preset management
+│   ├── adaptive.py         # Optimization algorithms
+│   └── anthrokit.yaml      # Preset definitions
+├── XAIagent/               # Example application
+│   ├── src/                # Streamlit apps (6 experimental conditions)
+│   ├── models/             # ML models for loan prediction task
+│   └── tests/              # Unit tests
+├── setup.py
+├── pyproject.toml
+└── requirements.txt
 ```
 
-## Quick Start
+## Experimental Conditions
 
-### Installation
+The framework supports 6 experimental conditions (3 anthropomorphism levels × 2 adaptation modes):
 
-```bash
-# Clone repository
-git clone https://github.com/your-org/anthrokit.git
-cd AnthroKit
+| Condition | Anthropomorphism | Personalization | Entry Point |
+|-----------|-----------------|-----------------|-------------|
+| NoA Fixed | None | Disabled | `app_nonanthro.py` |
+| NoA Adaptive | None | Enabled | `app_nonanthro_personalize.py` |
+| LowA Fixed | Low | Disabled | `app_condition_5.py` |
+| LowA Adaptive | Low | Enabled | `app_condition_5_personality.py` |
+| HighA Fixed | High | Disabled | `app_v1.py` |
+| HighA Adaptive | High | Enabled | `app_v1_personality.py` |
 
-# Install core package
-pip install -e .
+### Related Publications
 
-# Install with LLM stylization support
-pip install -e ".[llm]"
+*Publications list to be updated upon publication.*
 
-# Install with API service
-pip install -e ".[api]"
+## Acknowledgements
 
-# Install everything
-pip install -e ".[all]"
-```
+This framework builds upon foundational research in human-computer interaction, personality psychology, and conversational AI. 
 
-### Basic Usage: Scaffolds + Stylizer
-
-```python
-from anthrokit import load_preset, stylize_text
-│
-└── XAIagent/               # Validation study implementation
-    ├── src/                # Streamlit applications
-    │   ├── app_v1.py       # High anthropomorphism condition
-    │   ├── app_condition_5.py  # Low anthropomorphism condition
-    │   └── app_adaptive.py # Adaptive optimization demo
-    ├── config/             # System prompts and presets
-    └── data/               # Study datasets
-
-```
-
-## Installation
-
-```bash
-# Clone repository
-git clone https://github.com/ksauka/Anthrokit.git
-cd AnthroKit
-
-# Install package
-pip install -e .
-```
+### Theoretical Foundation
+- The TIPI questionnaire by Gosling et al. (2003) for accessible personality assessment
+- The PERSONAGE framework by Mairesse & Walker (2007, 2010, 2011)  for personality-driven language generation
+- Social Cues for Conversational Agents by Feine etal (2019)
 
 
-### Key References
-
-- **TIPI Scale**: Gosling, S. D., Rentfrow, P. J., & Swann, W. B., Jr. (2003). A very brief measure of the Big-Five personality domains. *Journal of Research in Personality*, 37(6), 504-528.
-- **PERSONAGE**: Mairesse, F., & Walker, M. (2007). PERSONAGE: Personality generation for dialogue. *ACL '07*.
+### Implementation & Data
+- **[XAgent](https://github.com/bach1292/XAgent)** by bach1292 - Original XAI agent framework and Adult dataset integration
+- **Adult Dataset** from [UCI Machine Learning Repository](https://archive.ics.uci.edu/ml/datasets/adult) via XAgent implementation
+- **Question-Intent Dataset** (`data_questions/Median_4.csv`) curated by XAgent, adapted from original work by Liao et al. (2020)
 
 ## License
 
-MIT License - see [LICENSE](LICENSE) for details.
+MIT License - See [LICENSE](LICENSE) for details.
+
+## Citation
+
+```bibtex
+@software{anthrokit2026,
+  title = {AnthroKit: Personality-Adaptive Anthropomorphism Framework},
+  author = {Sauka, Kudzai},
+  year = {2026},
+  url = {https://github.com/ksauka/Anthrokit}
+}
+```
 
 ## Contact
 
 Kudzai Sauka - [GitHub](https://github.com/ksauka)
-
----
-
-*This is a research framework under active development. Framework validation study in progress.*
-
-
-
-## Citation
-
-If you use AnthroKit in your research, please cite:
-
-```bibtex
-@software{anthrokit2026,
-  title = {AnthroKit: Research-Grade Anthropomorphism Design System for Conversational AI},
-  author = {AnthroKit Contributors},
-  year = {2026},
-  url = {https://github.com/your-org/anthrokit},
-  note = {Domain-agnostic token-based framework for promoting social presence 
-          in conversational AI through controlled anthropomorphism}
-}
-```
-
-## Academic Grounding
-
-AnthroKit is grounded in established HCI and psychology research:
-
-- **HAX Guidelines** (Microsoft, CHI 2019 / TOCHI 2022) - Responsible AI interaction design
-- **Three-Factor Anthropomorphism Theory** (Epley et al., 2007) - Psychological mechanisms
-- **CASA Framework** (Nass & Moon, 2000) - Computers as social actors
-- **Social Presence Theory** (Short et al., 1976) - Mediated communication
-- **Recent Chatbot Research** (2022-2024) - Tone effects in conversational AI
-
-### Key Publications
-- Seering et al. (2019). "Designing User Interface Elements to Improve the Quality of Conversation"
-- Candello et al. (2017). "Evaluating the conversation of conversational agents"
-- Følstad & Brandtzæg (2020). "Chatbots: Changing user needs and motivations"
