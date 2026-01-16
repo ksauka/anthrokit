@@ -254,6 +254,8 @@ if not st.session_state.get("prolific_pid"):
         - Your Prolific dashboard (top-right corner)
         - The study instructions page
         - The Qualtrics survey you came from
+        
+        ⏱️ **Please note:** After entering your ID, the app may take up to 30 seconds to load as we initialize the AI system. Thank you for your patience!
         """)
     
     prolific_input = st.text_input(
