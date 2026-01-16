@@ -3,6 +3,7 @@
 import pandas as pd
 import os
 import numpy as np
+import streamlit as st
 from constraints import L_SUPPORT_QUESTIONS_IDS, INTENT_TO_XAI_METHOD
 
 try:
@@ -19,6 +20,28 @@ except ImportError:
     SimCSE = None
     SIMCSE_AVAILABLE = False
 
+
+@st.cache_resource(show_spinner="Loading NLU model for explanation handling...")
+def _load_sentence_transformer_model():
+    """Load sentence-transformers model (cached globally).
+    Only loads once per deployment, shared across all users."""
+    try:
+        import torch
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+        
+        # Fix for PyTorch 2.x meta tensor issue
+        # Load model to CPU first, then move to device if needed
+        model = SentenceTransformer('all-MiniLM-L6-v2', device='cpu')
+        if device == "cuda":
+            model = model.to(device)
+        
+        print(f"✅ Loaded sentence-transformers model on {device}")
+        return model, device
+    except Exception as e:
+        print(f"⚠️ Failed to load sentence-transformers: {e}")
+        return None, None
+
+
 class NLU:
     def __init__(self, model_type="sentence_transformers", model_path=None):
         self.model_type = model_type
@@ -31,23 +54,13 @@ class NLU:
                 print("⚠️ sentence-transformers not available, trying SimCSE...")
                 self.model_type = "simcse"
             else:
-                try:
-                    import torch
-                    device = "cuda" if torch.cuda.is_available() else "cpu"
-                    
-                    # Fix for PyTorch 2.x meta tensor issue
-                    # Load model to CPU first, then move to device if needed
-                    self.model = SentenceTransformer('all-MiniLM-L6-v2', device='cpu')
-                    if device == "cuda":
-                        self.model = self.model.to(device)
-                    
-                    print(f"✅ Loaded sentence-transformers model on {device}")
+                # Use cached model loading
+                self.model, device = _load_sentence_transformer_model()
+                if self.model is not None:
                     # Pre-compute embeddings for all questions
                     self.question_embeddings = self.model.encode(self.questions, convert_to_numpy=True, show_progress_bar=False)
                     print(f"✅ Pre-computed embeddings for {len(self.questions)} questions")
-                    
-                except Exception as e:
-                    print(f"⚠️ Failed to load sentence-transformers: {e}")
+                else:
                     print("⚠️ Falling back to SimCSE...")
                     self.model_type = "simcse"
 

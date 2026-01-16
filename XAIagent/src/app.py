@@ -267,6 +267,8 @@ if not st.session_state.get("prolific_pid"):
         if prolific_input.strip():
             st.session_state.prolific_pid = prolific_input.strip()
             st.success("✅ ID captured! Loading study...")
+            import time
+            time.sleep(0.5)  # Brief delay so users see the success message
             st.rerun()
         else:
             st.error("⚠️ Please enter your Prolific ID to continue.")
@@ -334,7 +336,12 @@ if "loan_assistant" not in st.session_state and st.session_state.get("return_raw
 
 # Now import everything else
 from agent import Agent
-from nlu import NLU
+try:
+    from nlu import NLU
+except ImportError as e:
+    st.error(f"Failed to import NLU: {e}")
+    st.info("This is not critical - NLU is only needed for XAI explanation questions")
+    NLU = None
 from answer import Answers
 from github_saver import save_to_github
 from loan_assistant import LoanAssistant

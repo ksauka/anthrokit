@@ -4,13 +4,10 @@ import random
 import re
 import os
 import pandas as pd
-import shap
-import sklearn
 import pickle
 import streamlit as st
 from constraints import *
 from nlu import NLU
-import json
 from answer import Answers
 
 # Import natural conversation enhancer
@@ -32,16 +29,10 @@ class Agent:
         self.mode = None
         self.data = {"X": None, "y": None, "features": None, "classes": None}
 
-        # NLU setup: prefer provided model, else use config, else default
-        config_path = os.path.join(os.path.dirname(__file__), 'nlu_config.json')
-        if nlu_model is not None:
-            self.nlu_model = nlu_model
-        elif os.path.exists(config_path):
-            with open(config_path, 'r') as f:
-                nlu_config = json.load(f)
-            self.nlu_model = NLU(model_type=nlu_config.get('model_type', 'sentence_transformers'), model_path=nlu_config.get('model_path'))
-        else:
-            self.nlu_model = NLU()
+        # NLU setup: LAZY LOADING - only load when needed for XAI explanations
+        # This significantly speeds up initial app load
+        self._nlu_model = nlu_model  # Store but don't initialize yet
+        self._nlu_loaded = False
 
         # UI/state helpers
         self.list_node = []
@@ -66,30 +57,65 @@ class Agent:
         self.train_model()
 
     def load_adult_dataset(self):
-        data_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'adult.data')
-        info_path = os.path.join(os.path.dirname(__file__), '..', 'dataset_info', 'adult.json')
-        columns = [
-            'age', 'workclass', 'fnlwgt', 'education', 'education_num', 'marital_status',
-            'occupation', 'relationship', 'race', 'sex', 'capital_gain', 'capital_loss',
-            'hours_per_week', 'native_country', 'income'
-        ]
-        self.data['X_display'] = pd.read_csv(data_path, names=columns, skipinitialspace=True)
-        self.data['y_display'] = self.data['X_display']['income']
-        self.data['X_display'].drop(['income'], axis=1, inplace=True)
-        with open(info_path, 'r') as f:
-            self.data['info'] = json.load(f)
-        self.data['classes'] = ['<=50K', '>50K']
-        self.data['features'] = self.data['X_display'].columns.tolist()
-        self.data['feature_names'] = self.data['features']
-        self.data['map'] = {}
+        """Load adult dataset using cached function."""
+        self.data = _load_adult_dataset().copy()  # Use cached data
 
     def train_model(self):
         """Initialize the classifier using cached model loading."""
         self.clf = _load_or_train_model()
         self.clf_display = self.clf
+    
+    @property
+    def nlu_model(self):
+        """Lazy-load NLU model only when needed for XAI explanations.
+        This prevents loading the heavy sentence-transformers model during app startup."""
+        if not self._nlu_loaded:
+            print("🔄 Loading NLU model for explanation handling...")
+            config_path = os.path.join(os.path.dirname(__file__), 'nlu_config.json')
+            if self._nlu_model is not None:
+                self._nlu_model_instance = self._nlu_model
+            elif os.path.exists(config_path):
+                with open(config_path, 'r') as f:
+                    nlu_config = json.load(f)
+                self._nlu_model_instance = NLU(
+                    model_type=nlu_config.get('model_type', 'sentence_transformers'),
+                    model_path=nlu_config.get('model_path')
+                )
+            else:
+                self._nlu_model_instance = NLU()
+            self._nlu_loaded = True
+            print("✅ NLU model loaded")
+        return self._nlu_model_instance
 
 
-# Module-level cached function (shared across all Agent instances)
+# Module-level cached functions (shared across all Agent instances)
+@st.cache_data(show_spinner=False)
+def _load_adult_dataset():
+    """Load adult dataset (cached to avoid repeated CSV reads)."""
+    data_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'adult.data')
+    info_path = os.path.join(os.path.dirname(__file__), '..', 'dataset_info', 'adult.json')
+    columns = [
+        'age', 'workclass', 'fnlwgt', 'education', 'education_num', 'marital_status',
+        'occupation', 'relationship', 'race', 'sex', 'capital_gain', 'capital_loss',
+        'hours_per_week', 'native_country', 'income'
+    ]
+    X_display = pd.read_csv(data_path, names=columns, skipinitialspace=True)
+    y_display = X_display['income']
+    X_display = X_display.drop(['income'], axis=1)
+    
+    with open(info_path, 'r') as f:
+        info = json.load(f)
+    
+    return {
+        'X_display': X_display,
+        'y_display': y_display,
+        'info': info,
+        'classes': ['<=50K', '>50K'],
+        'features': X_display.columns.tolist(),
+        'feature_names': X_display.columns.tolist(),
+        'map': {}
+    }
+
 @st.cache_resource(show_spinner="Loading AI model...")
 def _load_or_train_model():
     """Load or train the classifier model (cached across all users).
