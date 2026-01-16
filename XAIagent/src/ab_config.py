@@ -28,12 +28,6 @@ class AppConfig:
         self.version     = self._legacy_version_label()            # v0 | v1 (for sidebar display only)
         self.session_id  = self._generate_session_id()             # unique session tracking
 
-        # Adaptive optimization settings (read from env)
-        self.adaptive_mode = os.getenv("ADAPTIVE_MODE", "disabled") == "enabled"
-        self.adaptive_range_min = float(os.getenv("ADAPTIVE_RANGE_MIN", "0.25"))
-        self.adaptive_range_max = float(os.getenv("ADAPTIVE_RANGE_MAX", "0.75"))
-        self.adaptive_tokens = os.getenv("ADAPTIVE_TOKENS", "warmth,empathy").split(",")
-
         # derived feature flags for UI rendering, explanations, and logging
         self.show_anthropomorphic   = (self.anthro == "high")
         self.show_profile_pic       = self.show_anthropomorphic
@@ -139,51 +133,6 @@ class AppConfig:
             self.hedging = preset.get("hedging", 0.45 if self.anthro == "high" else (0.20 if self.anthro == "none" else 0.35))
             self.self_reference = preset.get("self_reference", "I" if self.anthro == "high" else "none")
             
-            # Check if adaptive mode is enabled - override adaptive tokens
-            if self.adaptive_mode:
-                from anthrokit.adaptive import ThresholdOptimizer
-                
-                # Use base preset matching the condition (CRITICAL for range exploration)
-                # This ensures optimizer generates values within the appropriate range
-                optimizer_base = self.anthro_preset  # Use same preset as condition
-                
-                try:
-                    optimizer = ThresholdOptimizer(
-                        tokens=self.adaptive_tokens,
-                        target_metric="social_presence",
-                        threshold_range=(self.adaptive_range_min, self.adaptive_range_max),
-                        base_preset=optimizer_base,
-                        n_levels=5
-                    )
-                    
-                    # Get next condition from optimizer (explores within range)
-                    next_condition = optimizer.get_next_condition()
-                    
-                    # Override adaptive tokens with optimizer-suggested values
-                    if 'warmth' in self.adaptive_tokens:
-                        self.warmth = next_condition.get('warmth', self.warmth)
-                    if 'empathy' in self.adaptive_tokens:
-                        self.empathy = next_condition.get('empathy', self.empathy)
-                    if 'formality' in self.adaptive_tokens:
-                        self.formality = next_condition.get('formality', self.formality)
-                    
-                    # Store optimizer for later outcome recording
-                    self.optimizer = optimizer
-                    self.current_condition = next_condition
-                    
-                    print(f"🔧 Adaptive mode: exploring {self.adaptive_tokens} in range [{self.adaptive_range_min:.2f}, {self.adaptive_range_max:.2f}]")
-                    print(f"   Base preset: {optimizer_base}, Current values: warmth={self.warmth:.2f}, empathy={self.empathy:.2f}")
-                
-                except Exception as e:
-                    print(f"⚠️ Adaptive optimizer failed to initialize: {e}")
-                    print(f"   Falling back to fixed preset values")
-                    self.optimizer = None
-                    self.current_condition = None
-            else:
-                # Standard preset loading (fixed values)
-                self.optimizer = None
-                self.current_condition = None
-            
             # Load full config for policy flags
             try:
                 config = AnthroKitConfig()
@@ -255,8 +204,6 @@ class AppConfig:
         self.base_preset = self.final_tone_config.copy()
         self.personality_adjustments = {}
         self.self_reference = "I" if self.show_anthropomorphic else "none"
-        self.optimizer = None
-        self.current_condition = None
         
         # Policy defaults
         self.no_deception = True

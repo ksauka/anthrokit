@@ -9,7 +9,6 @@ Design Philosophy:
     - Token-based control of anthropomorphic dimensions
     - LLM-based + pattern-based fallback stylization
     - Comprehensive guardrails for ethical AI
-    - Adaptive optimization for finding optimal thresholds
 
 Example:
     >>> from anthrokit import load_preset, stylize_text
@@ -19,14 +18,6 @@ Example:
     >>> styled = stylize_text(base, preset)
     >>> print(styled)
     "I know this isn't ideal — your preliminary result is declined."
-
-Adaptive Research:
-    >>> from anthrokit.adaptive import ThresholdOptimizer
-    >>> optimizer = ThresholdOptimizer(tokens=["warmth", "empathy"])
-    >>> preset = optimizer.get_next_condition()
-    >>> # Run experiment...
-    >>> optimizer.record_outcome(preset, {"trust": 4.2})
-    >>> best = optimizer.get_best_preset()
 
 Version: 1.0.0
 License: MIT
@@ -99,14 +90,6 @@ from .tracking import (
     get_anthropomorphism_distribution,
     get_app_usage_stats,
     export_analytics,
-)
-from .integrations import (
-    init_adaptive_session,
-    get_current_preset,
-    record_session_outcome,
-    get_optimization_stats,
-    get_best_preset,
-    display_admin_panel,
 )
 
 __all__ = [

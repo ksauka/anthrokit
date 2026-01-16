@@ -8,7 +8,6 @@ from pathlib import Path
 
 os.environ['ANTHROKIT_EXPLANATION'] = 'feature_importance'
 os.environ['ANTHROKIT_ANTHRO'] = 'low'
-os.environ['ADAPTIVE_MODE'] = 'disabled'
 os.environ['PERSONALITY_ADAPTATION'] = 'disabled'
 
 # Get absolute path to app.py

@@ -1406,17 +1406,8 @@ if current_state == 'complete' and len(st.session_state.chat_history) > 5:
                     "completion": completion
                 }
                 
-                # Record with adaptive optimizer (if enabled)
-                if config.optimizer and config.current_condition:
-                    config.optimizer.record_outcome(
-                        preset=config.current_condition,
-                        outcomes=outcomes,
-                        personality=personality_traits
-                    )
-                    print(f"📊 Recorded outcome with adaptive optimizer")
-                
                 # Build final tone config
-                final_config = config.current_condition or {
+                final_config = {
                     "warmth": config.warmth,
                     "empathy": config.empathy,
                     "formality": config.formality,
