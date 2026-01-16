@@ -8,7 +8,6 @@ from pathlib import Path
 # Set base configuration for LowA
 os.environ['ANTHROKIT_EXPLANATION'] = 'feature_importance'
 os.environ['ANTHROKIT_ANTHRO'] = 'low'
-os.environ['ADAPTIVE_MODE'] = 'disabled'
 
 # Enable personality personalization
 os.environ['PERSONALITY_ADAPTATION'] = 'enabled'
