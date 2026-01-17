@@ -8,7 +8,7 @@ st.set_page_config(page_title="AI Loan Assistant - Credit Pre-Assessment", layou
 
 # Import Agent early so model downloads BEFORE Prolific ID screen
 # This moves the 30-second delay to app startup instead of after ID entry
-with st.spinner("🤖 Initializing AI system... (First load may take up to 30 seconds)"):
+with st.spinner("🔬 Preparing study environment... Please wait while we set up the research session."):
     from agent import Agent
 from answer import Answers
 from github_saver import save_to_github
