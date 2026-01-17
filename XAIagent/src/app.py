@@ -6,6 +6,20 @@ import env_loader
 # Configure page FIRST - before any other Streamlit commands
 st.set_page_config(page_title="AI Loan Assistant - Credit Pre-Assessment", layout="wide")
 
+# Import Agent early so model downloads BEFORE Prolific ID screen
+# This moves the 30-second delay to app startup instead of after ID entry
+with st.spinner("🤖 Initializing AI system... (First load may take up to 30 seconds)"):
+    from agent import Agent
+from answer import Answers
+from github_saver import save_to_github
+from loan_assistant import LoanAssistant
+from ab_config import config
+from shap_visualizer import display_shap_explanation, explain_shap_visualizations
+from interaction_logger import create_logger_from_secrets
+from xai_methods import get_friendly_feature_name
+import os
+import pandas as pd
+
 # Hide Streamlit branding for anonymous review (CSS + JavaScript)
 st.markdown("""
 <style>
@@ -254,8 +268,6 @@ if not st.session_state.get("prolific_pid"):
         - Your Prolific dashboard (top-right corner)
         - The study instructions page
         - The Qualtrics survey you came from
-        
-        ⏱️ **Please note:** After entering your ID, the app may take up to 30 seconds to load as we initialize the AI system. Thank you for your patience!
         """)
     
     prolific_input = st.text_input(
@@ -268,9 +280,6 @@ if not st.session_state.get("prolific_pid"):
     if st.button("Continue to Study", type="primary"):
         if prolific_input.strip():
             st.session_state.prolific_pid = prolific_input.strip()
-            st.success("✅ ID captured! Loading study...")
-            import time
-            time.sleep(0.5)  # Brief delay so users see the success message
             st.rerun()
         else:
             st.error("⚠️ Please enter your Prolific ID to continue.")
@@ -336,23 +345,13 @@ if "loan_assistant" not in st.session_state and st.session_state.get("return_raw
 
 # ===== END QUALTRICS/PROLIFIC INTEGRATION =====
 
-# Now import everything else
-from agent import Agent
+# Import NLU (other imports already done at top of file)
 try:
     from nlu import NLU
 except ImportError as e:
     st.error(f"Failed to import NLU: {e}")
     st.info("This is not critical - NLU is only needed for XAI explanation questions")
     NLU = None
-from answer import Answers
-from github_saver import save_to_github
-from loan_assistant import LoanAssistant
-from ab_config import config
-from shap_visualizer import display_shap_explanation, explain_shap_visualizations
-from interaction_logger import create_logger_from_secrets
-from xai_methods import get_friendly_feature_name
-import os
-import pandas as pd
 
 # Determine condition name based on environment variables
 # Map to user-friendly condition names for logging
