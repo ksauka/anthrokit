@@ -242,7 +242,7 @@ class LoanAssistant:
                 self.conversation_state = ConversationState.COLLECTING_INFO
                 base_greeting = ("Welcome! This is Luna, your loan pre-assessment assistant. 😊\n\n"
                        "📋 **Research Note:** This is a study about AI explanation systems using the Adult Income dataset. "
-                       "I'll predict whether your income is above or below $50K as a proxy for loan eligibility. "
+                       "I'll predict whether you earn more than $50,000 per year as a proxy for loan eligibility. "
                        "To ensure fairness, we've excluded demographic data (race, gender, nationality) from our AI model, "
                        "focusing only on financial and professional qualifications.\n\n"
                        "**I will collect 9 pieces of information, one at a time:**\n"
@@ -266,7 +266,7 @@ class LoanAssistant:
             else:
                 base_prompt = ("Hello! This is Luna, your loan pre-assessment assistant. 😊\n\n"
                        "📋 **Research Note:** This is a study about AI explanation systems using the Adult Income dataset. "
-                       "I'll predict whether your income is above or below $50K as a proxy for loan eligibility. "
+                       "I'll predict whether you earn more than $50,000 per year as a proxy for loan eligibility. "
                        "To ensure fairness, we've excluded demographic data (race, gender, nationality) from our AI model, "
                        "focusing only on financial and professional qualifications.\n\n"
                        "**I will collect 9 pieces of information, one at a time:**\n"
@@ -292,7 +292,7 @@ class LoanAssistant:
             if any(keyword in user_input.lower() for keyword in greeting_keywords) or user_input.lower() in ['yes', 'y']:
                 self.conversation_state = ConversationState.COLLECTING_INFO
                 base_greeting = ("Welcome. This is the Loan Pre-Assessment Agent.\n\n"
-                       "**Research Disclaimer:** This system uses the Adult Income dataset to predict income level (≤$50K or >$50K) "
+                       "**Research Disclaimer:** This system uses the Adult Income dataset to predict whether annual income exceeds $50,000 "
                        "as a proxy for loan eligibility. This is a study of AI explanation methods, not actual loan decisions. "
                        "Demographic attributes (race, gender, nationality) have been excluded to prevent discriminatory outcomes. "
                        "Assessment is based exclusively on financial and professional factors.\n\n"
@@ -316,7 +316,7 @@ class LoanAssistant:
                 return f"{base_greeting}\n\n{self._get_next_question()}"
             else:
                 base_prompt = ("This is the Loan Pre-Assessment Agent.\n\n"
-                       "**Research Disclaimer:** This system uses the Adult Income dataset to predict income level (≤$50K or >$50K) "
+                       "**Research Disclaimer:** This system uses the Adult Income dataset to predict whether annual income exceeds $50,000 "
                        "as a proxy for loan eligibility. This is a study of AI explanation methods, not actual loan decisions. "
                        "Demographic attributes (race, gender, nationality) have been excluded to prevent discriminatory outcomes. "
                        "Assessment is based exclusively on financial and professional factors.\n\n"
@@ -362,7 +362,7 @@ class LoanAssistant:
                     return f"Help for {self.current_field.replace('_', ' ')}:\n\n{self._get_field_help(self.current_field)}\n\nQuick-select buttons available when applicable."
             else:
                 if config.show_anthropomorphic:
-                    return "I'm here to help! I'm collecting information for your loan application step by step. You can say 'review' to see your progress, or just answer the current question. 😊"
+                    return "I'm here to help! I'm collecting information for your income assessment step by step. You can say 'review' to see your progress, or just answer the current question. 😊"
                 else:
                     return "Data collection in progress. Enter 'review' for status or respond to current query."
         
@@ -380,7 +380,7 @@ class LoanAssistant:
                     if config.show_anthropomorphic:
                         return (f"🎉 Fantastic! I've collected all the necessary information ({completion:.0f}% complete).\n\n"
                                + self._show_application_summary() + 
-                               "\n\n💼 Would you like me to process your loan application now? (yes/no)")
+                               "\n\n💼 Would you like me to assess your income profile now? (yes/no)")
                     else:
                         return (f"Data collection complete ({completion:.0f}%).\n\n"
                                + self._show_application_summary() + 
@@ -405,7 +405,7 @@ class LoanAssistant:
                         self.conversation_state = ConversationState.REVIEWING
                         return (f"Great! I have most of the information ({completion:.0f}% complete).\n\n"
                                + self._show_application_summary() + 
-                               "\n\nWould you like me to process your loan application? (yes/no)")
+                               "\n\nWould you like me to process your income assessment? (yes/no)")
             else:
                 return result['message']
         else:
@@ -455,7 +455,7 @@ class LoanAssistant:
             return self._handle_explanation(user_input)
         # Handle acknowledgments and farewells gracefully
         elif any(phrase in user_lower for phrase in ['thank', 'thanks', 'bye', 'goodbye', 'ok', 'okay', 'got it', 'understood', 'great', 'perfect', 'good']):
-            return ("You're welcome! If you have any other questions about your loan decision, feel free to ask. "
+            return ("You're welcome! If you have any other questions about your income assessment, feel free to ask. "
                    "Otherwise, say 'new' when you're ready to start a fresh application.")
         else:
             # Check if the application has been processed
@@ -469,25 +469,25 @@ class LoanAssistant:
             
             if config.explanation == "none":
                 # Simple message without explanation options
-                return (f"Your loan application has been {status}. "
-                       f"For further details, please visit your local branch. "
-                       f"Would you like to start a new application? Just say 'new' or 'restart'.")
+                return (f"Your income assessment shows: {status}. "
+                       f"This is for research purposes only. "
+                       f"Would you like to start a new assessment? Just say 'new' or 'restart'.")
             else:
                 # Full options when explanations are available
-                return (f"Your loan application has been {status}! Here's what you can do:\n\n"
-                       "🔍 **Ask for explanations:** 'Why was I approved/denied?' or 'Explain the decision'\n"
+                return (f"Your income assessment shows: {status}! Here's what you can do:\n\n"
+                       "🔍 **Ask for explanations:** 'Why was I predicted this way?' or 'Explain the assessment'\n"
                        "🔧 **What-if analysis:** 'What if my income was higher?' or 'What changes would help?'\n"
                        "📊 **Feature importance:** 'Which factors were most important?'\n"
-                       "🆕 **New application:** 'Start a new application'\n\n"
-                       "Just ask me anything about your loan decision!")
+                       "🆕 **New assessment:** 'Start a new assessment'\n\n"
+                       "Just ask me anything about your income prediction!")
 
     def _handle_explanation(self, user_input: str) -> str:
         """Handle explanation requests using the XAgent-compatible approach"""
         # If explanations are disabled (none condition), provide generic response
         if config.explanation == "none":
             return ("I'm sorry, but detailed explanations are not available at this time. "
-                   "For further information about your loan decision, please visit your local branch. "
-                   "Would you like to start a new application?")
+                   "This assessment is for research purposes only. "
+                   "Would you like to start a new assessment?")
         
         try:
             # Set up the agent instance properly first
@@ -1533,19 +1533,19 @@ class LoanAssistant:
                 
                 self.conversation_state = ConversationState.COMPLETE
                 
-                result_msg = f"🎉 **Loan Application Result: {decision}**\n\n"
+                result_msg = f"🎉 **Income Assessment Result: {decision}**\n\n"
                 
                 if approved:
-                    result_msg += ("Congratulations! Your loan application has been approved based on your profile. "
-                                 "You should hear from our lending team within 2-3 business days.\n\n")
+                    result_msg += ("Based on your profile, the model predicts your income is over $50,000 per year. "
+                                 "This suggests you would likely qualify for the loan.\n\n")
                 else:
                     # Simple message for non-explanation conditions
                     if config.explanation == "none":
-                        result_msg += ("Based on the data you provided, you could not qualify for the loan at this time. "
-                                     "For further details, please visit your local branch.\n\n")
+                        result_msg += ("Based on your profile, the model predicts your income is $50,000 or less per year. "
+                                     "This suggests you may not qualify for the loan at this time.\n\n")
                     else:
-                        result_msg += ("Unfortunately, your loan application was not approved at this time. "
-                                     "This decision is based on various factors in your application.\n\n")
+                        result_msg += ("Based on your profile, the model predicts your income is $50,000 or less per year. "
+                                     "This prediction is based on various factors in your profile.\n\n")
                 
                 # Only offer explanations if explanation mode is enabled
                 if config.show_any_explanation:
@@ -1582,7 +1582,7 @@ class LoanAssistant:
         self.current_field = None
         self.field_attempts = {}
         self.show_what_if_lab = False
-        return "Great! Let's start a new loan application. Hi! I'm your loan application assistant. Would you like to start your loan application?"
+        return "Great! Let's start a new assessment. Hi! I'm your income assessment assistant. Would you like to start your assessment?"
 
     def get_conversation_state(self) -> Dict[str, Any]:
         """Get current conversation state for debugging/monitoring"""

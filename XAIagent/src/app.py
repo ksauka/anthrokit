@@ -1263,7 +1263,7 @@ elif current_state == 'collecting_info':
                 help_msg = st.session_state.loan_assistant._get_field_help(current_field)
                 help_msg += f"\n\n💡 **You can also:**\n• Say 'review' to see your progress\n• Click the quick-select buttons below\n• Ask for specific examples"
             else:
-                help_msg = ("I'm collecting information for your loan application. Please answer the questions "
+                help_msg = ("I'm collecting information for your income assessment. Please answer the questions "
                            "as accurately as possible. You can say 'review' to see your progress.")
             st.session_state.chat_history.append(("help", help_msg))
             st_rerun()
