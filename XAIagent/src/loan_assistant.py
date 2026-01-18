@@ -89,7 +89,7 @@ class LoanApplication:
         completed_fields = sum(1 for field_name, field_def in self.__dataclass_fields__.items() 
                               if field_name not in ['is_complete', 'completion_percentage'] 
                               and getattr(self, field_name) is not None)
-        self.completion_percentage = (completed_fields / total_fields) * 100
+        self.completion_percentage = round((completed_fields / total_fields) * 100, 1)
         self.is_complete = self.completion_percentage >= 80  # 80% completion threshold
         return self.completion_percentage
 

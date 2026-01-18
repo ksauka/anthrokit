@@ -1111,25 +1111,25 @@ if current_field and current_field in field_options:
                 
                 # Enhanced button styling based on option type
                 if option == "Other":
-                    button_text = f"🔄 {friendly_option}"
+                    button_text = friendly_option
                     button_type = "primary"
                 elif option == "?":
-                    button_text = f"❓ Unknown/Prefer not to say"
+                    button_text = "Unknown/Prefer not to say"
                     button_type = "primary"
                 elif option in ["Male", "Female"]:
-                    button_text = f"👤 {friendly_option}"
+                    button_text = friendly_option
                     button_type = "secondary"
                 elif option == "United-States":
-                    button_text = f"🇺🇸 {friendly_option}"
+                    button_text = friendly_option
                     button_type = "primary"
                 elif option in ["Private", "Self-emp-not-inc", "Self-emp-inc"]:
-                    button_text = f"💼 {friendly_option}"
+                    button_text = friendly_option
                     button_type = "secondary"
                 elif "gov" in option.lower():
-                    button_text = f"🏛️ {friendly_option}"
+                    button_text = friendly_option
                     button_type = "secondary"
                 else:
-                    button_text = f"✨ {friendly_option}"
+                    button_text = friendly_option
                     button_type = "secondary"
                 
                 if st.button(button_text, key=f"option_top_{current_field}_{option}", width="stretch", type=button_type):
@@ -1137,7 +1137,7 @@ if current_field and current_field in field_options:
                     st_rerun()
     
     st.markdown('</div>', unsafe_allow_html=True)
-    st.markdown("*💬 Or you can still type your answer in the chat box above*")
+    st.markdown("*Or you can still type your answer in the chat box above*")
 
 # Process user input
 if send_button and user_message:
@@ -1312,25 +1312,25 @@ if current_state == 'collecting_info' and hasattr(st.session_state.loan_assistan
                         friendly_option = option.replace('-', ' ').replace('_', ' ')
                     
                     if option == "Other":
-                        button_text = f"🔄 {friendly_option}"
+                        button_text = friendly_option
                         button_type = "primary"
                     elif option == "?":
-                        button_text = f"❓ Unknown/Prefer not to say"
+                        button_text = "Unknown/Prefer not to say"
                         button_type = "primary"
                     elif option in ["Male", "Female"]:
-                        button_text = f"👤 {friendly_option}"
+                        button_text = friendly_option
                         button_type = "secondary"
                     elif option == "United-States":
-                        button_text = f"🇺🇸 {friendly_option}"
+                        button_text = friendly_option
                         button_type = "primary"
                     elif option in ["Private", "Self-emp-not-inc", "Self-emp-inc"]:
-                        button_text = f"💼 {friendly_option}"
+                        button_text = friendly_option
                         button_type = "secondary"
                     elif "gov" in option.lower():
-                        button_text = f"🏛️ {friendly_option}"
+                        button_text = friendly_option
                         button_type = "secondary"
                     else:
-                        button_text = f"✨ {friendly_option}"
+                        button_text = friendly_option
                         button_type = "secondary"
                     
                     if st.button(button_text, key=f"option_{current_field}_{option}", width="stretch", type=button_type):
@@ -1338,7 +1338,7 @@ if current_state == 'collecting_info' and hasattr(st.session_state.loan_assistan
                         st_rerun()
         
         st.markdown('</div>', unsafe_allow_html=True)
-        st.markdown("*💬 Or you can still type your answer in the chat box above*")
+        st.markdown("*Or you can still type your answer in the chat box above*")
 
 # Feedback section (appears after application is complete)
 if current_state == 'complete' and len(st.session_state.chat_history) > 5:
