@@ -719,18 +719,31 @@ if personality_required:
             
 Rate yourself on these traits (1 = Disagree strongly, 7 = Agree strongly):""")
             
+            # TIPI standard order (alternating across traits to reduce response bias)
+            tipi_order = [
+                ("extraversion", 0, "Extraverted, enthusiastic", 1),
+                ("agreeableness", 0, "Critical, quarrelsome", -1),
+                ("conscientiousness", 0, "Dependable, self-disciplined", 1),
+                ("neuroticism", 0, "Anxious, easily upset", 1),
+                ("openness", 0, "Open to new experiences, complex", 1),
+                ("extraversion", 1, "Reserved, quiet", -1),
+                ("agreeableness", 1, "Sympathetic, warm", 1),
+                ("conscientiousness", 1, "Disorganized, careless", -1),
+                ("neuroticism", 1, "Calm, emotionally stable", -1),
+                ("openness", 1, "Conventional, uncreative", -1)
+            ]
+            
             responses = {}
-            for trait, items in BIG_5_ITEMS.items():
-                for i, (item_text, direction) in enumerate(items):
-                    key = f"personality_{trait}_{i}"
-                    response = st.slider(
-                        f"I see myself as: **{item_text}**",
-                        min_value=1,
-                        max_value=7,
-                        value=4,
-                        key=key
-                    )
-                    responses[key] = (trait, response, direction)
+            for trait, i, item_text, direction in tipi_order:
+                key = f"personality_{trait}_{i}"
+                response = st.slider(
+                    f"I see myself as: **{item_text}**",
+                    min_value=1,
+                    max_value=7,
+                    value=4,
+                    key=key
+                )
+                responses[key] = (trait, response, direction)
             
             submitted = st.form_submit_button("Submit & Continue")
             
