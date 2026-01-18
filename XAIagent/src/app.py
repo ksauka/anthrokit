@@ -1147,12 +1147,25 @@ if send_button and user_message:
     # Log interaction
     if logger:
         current_field = getattr(st.session_state.loan_assistant, 'current_field', None)
-        logger.log_interaction("user_message", {
-            "field": current_field,
-            "input_method": "typed",
-            "content": user_message,
-            "conversation_state": st.session_state.loan_assistant.conversation_state.value
-        })
+        
+        # Detect if this is an explanation request
+        explanation_keywords = ['explain', 'why', 'how', 'what if', 'reason', 'because']
+        is_explanation_request = any(keyword in user_message.lower() for keyword in explanation_keywords)
+        
+        if is_explanation_request:
+            # Log as explanation request
+            logger.log_interaction("explanation_request", {"type": "text_explanation", "content": user_message})
+            # Track that user triggered explanation
+            if hasattr(logger, 'log_task_event'):
+                logger.log_task_event("why_triggered")
+        else:
+            # Regular user message
+            logger.log_interaction("user_message", {
+                "field": current_field,
+                "input_method": "typed",
+                "content": user_message,
+                "conversation_state": st.session_state.loan_assistant.conversation_state.value
+            })
     
     # Handle the message through loan assistant
     assistant_response = st.session_state.loan_assistant.handle_message(user_message)
