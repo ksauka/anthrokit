@@ -288,7 +288,6 @@ class LoanAssistant:
                        "• Education level\n"
                        "• Financial data (capital gains/losses)\n"
                        "• Demographics & relationship\n\n"
-                       "Progress tracking available in sidebar.\n\n"
                        "**First question:**")
                 
                 # Enhance with LLM for professional tone
@@ -309,7 +308,6 @@ class LoanAssistant:
                        "• Education level\n"
                        "• Financial data (capital gains/losses)\n"
                        "• Demographics & relationship\n\n"
-                       "Progress tracking available in sidebar.\n\n"
                        "Enter 'yes' or 'start' to begin data collection.")
                 
                 # Enhance with LLM for professional tone

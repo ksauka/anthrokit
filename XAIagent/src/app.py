@@ -324,9 +324,9 @@ if st.session_state.get("_returned"):
         st.markdown(f'<meta http-equiv="refresh" content="0;url={final}">', unsafe_allow_html=True)
         st.stop()
 
-# set the 3.5-minute deadline once and track start time
+# set the 4.5-minute deadline once and track start time
 if "deadline_ts" not in st.session_state:
-    st.session_state.deadline_ts = time.time() + 210  # 3.5 minutes = 210 seconds
+    st.session_state.deadline_ts = time.time() + 270  # 4.5 minutes = 270 seconds
     st.session_state.start_time = time.time()  # Track when user started
 
 # fire auto-return when time is up (exactly once)
