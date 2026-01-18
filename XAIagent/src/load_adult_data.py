@@ -24,11 +24,13 @@ def load_adult_data(data_dir, balance=False, discretize=True):
     for col in num_cols:
         df[col] = pd.to_numeric(df[col], errors='coerce')
     
-    # ETHICAL AI: Drop sensitive demographic features before one-hot encoding
+    # ETHICAL AI: Drop sensitive demographic features AND technical artifacts before one-hot encoding
     # These features are not collected from users and should not influence predictions
     sensitive_features = ['race', 'sex', 'native_country']
-    df = df.drop(columns=sensitive_features)
-    print(f"[load_adult_data] Dropped sensitive features: {sensitive_features}")
+    technical_features = ['fnlwgt', 'education_num']  # Census weight + redundant with education categorical
+    features_to_drop = sensitive_features + technical_features
+    df = df.drop(columns=features_to_drop)
+    print(f"[load_adult_data] Dropped features: {features_to_drop}")
     
     # Optionally encode categorical variables using one-hot encoding (excluding sensitive features)
     cat_cols = [
