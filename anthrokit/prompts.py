@@ -630,3 +630,52 @@ def build_system_prompt(
         full_prompt += f"\n\nTask: {task_context}"
     
     return full_prompt
+
+
+def build_help_prompt(
+    preset: Dict[str, Any],
+    user_question: str,
+    knowledge_context: str
+) -> str:
+    """Build system prompt for answering help questions with bounded knowledge.
+    
+    Provides conversational help about features, SHAP explanations, dataset, and model
+    using retrieved knowledge base context. Responses are bounded to provided knowledge
+    to prevent hallucination.
+    
+    Args:
+        preset: Final tone configuration (personality-adjusted)
+        user_question: The user's help question
+        knowledge_context: Relevant knowledge retrieved from knowledge base
+        
+    Returns:
+        System prompt for help response generation
+    """
+    domain_instructions = f"""You are a helpful assistant answering questions about a credit pre-assessment system.
+
+**User's Question:**
+{user_question}
+
+**Relevant Knowledge:**
+{knowledge_context}
+
+**Your Task:**
+Answer the user's question based ONLY on the provided knowledge above. Be helpful, clear, and conversational.
+
+**Guidelines:**
+- Use simple, everyday language (avoid jargon unless explaining it)
+- Be concise but complete (2-4 sentences for simple questions, more for complex ones)
+- If the knowledge doesn't fully answer the question, acknowledge what you can explain
+- Use examples when helpful
+- Stay focused on the question asked
+- Do NOT make up information not in the knowledge base
+- Preserve any numbers or statistics exactly as provided
+
+**Important:**
+This is a bounded help system - only answer based on the knowledge provided. If something isn't covered in the knowledge, say so honestly."""
+
+    return _build_stylization_prompt(
+        preset=preset,
+        text=domain_instructions,
+        context=None
+    )

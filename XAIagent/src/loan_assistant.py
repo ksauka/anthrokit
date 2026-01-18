@@ -14,6 +14,29 @@ import numpy as np
 import difflib
 from xai_methods import get_friendly_feature_name, FEATURE_DISPLAY_NAMES
 
+# Import knowledge base for conversational help
+try:
+    from knowledge_base import (search_knowledge_base, get_feature_help, 
+                                get_intent_type, is_help_question, is_xai_request, 
+                                is_navigation, is_meta_question)
+    KNOWLEDGE_BASE_AVAILABLE = True
+except ImportError:
+    KNOWLEDGE_BASE_AVAILABLE = False
+    def search_knowledge_base(query, top_k=3):
+        return "Knowledge base not available."
+    def get_feature_help(field):
+        return "Help text not available."
+    def get_intent_type(user_input):
+        return "field_answer"
+    def is_help_question(user_input):
+        return False
+    def is_xai_request(user_input):
+        return False
+    def is_navigation(user_input):
+        return False
+    def is_meta_question(user_input):
+        return False
+
 # Import natural conversation enhancer
 try:
     from natural_conversation import enhance_response, enhance_validation_message, handle_meta_question
@@ -341,14 +364,18 @@ class LoanAssistant:
 
     def _handle_info_collection(self, user_input: str) -> str:
         """Handle information collection phase"""
-        if user_input.lower() in ['quit', 'exit', 'stop', 'cancel']:
-            if config.show_anthropomorphic:
-                return "Application cancelled. Feel free to start again anytime by saying 'hi'! 😊"
-            else:
-                return "Application process terminated. Restart available via 'hi' command."
+        # Use intent detection for better routing
+        intent = get_intent_type(user_input)
         
-        if user_input.lower() in ['review', 'check', 'status']:
-            return self._show_progress()
+        if intent == 'navigation':
+            if user_input.lower() in ['quit', 'exit', 'stop', 'cancel']:
+                if config.show_anthropomorphic:
+                    return "Application cancelled. Feel free to start again anytime by saying 'hi'! 😊"
+                else:
+                    return "Application process terminated. Restart available via 'hi' command."
+            
+            if user_input.lower() in ['review', 'check', 'status']:
+                return self._show_progress()
         
         # Handle '?' - provide copyable list of valid options
         if user_input.strip() == '?' and self.current_field:
@@ -365,6 +392,11 @@ class LoanAssistant:
                     return "I'm here to help! I'm collecting information for your income assessment step by step. You can say 'review' to see your progress, or just answer the current question. 😊"
                 else:
                     return "Data collection in progress. Enter 'review' for status or respond to current query."
+        
+        # Check for knowledge-based help questions (what is X, why X, etc.)
+        if intent == 'help_question':
+            # This looks like a help question - use knowledge base
+            return self._handle_knowledge_question(user_input)
         
         # Process the current field
         if self.current_field:
@@ -1810,6 +1842,63 @@ class LoanAssistant:
             footer += "\n\n**Quick-select buttons:** Clickable options are displayed below the chat for faster selection."
         
         return header + options_list + footer
+    
+    def _handle_knowledge_question(self, user_question: str) -> str:
+        """Handle knowledge-based help questions using RAG from knowledge base.
+        
+        Questions like:
+        - "What is occupation?"
+        - "Why do you need my education?"
+        - "What does a SHAP value mean?"
+        - "Tell me about the dataset"
+        """
+        if not KNOWLEDGE_BASE_AVAILABLE:
+            return "I apologize, but I cannot access detailed help information at the moment."
+        
+        try:
+            # Import AnthroKit help prompt builder
+            import anthrokit.prompts
+            from ab_config import config
+            
+            # Retrieve relevant knowledge
+            knowledge_context = search_knowledge_base(user_question, top_k=3)
+            
+            # Build help prompt with personality
+            system_prompt = anthrokit.prompts.build_help_prompt(
+                preset=config.final_tone_config,
+                user_question=user_question,
+                knowledge_context=knowledge_context
+            )
+            
+            # Generate response using LLM
+            if NATURAL_CONVERSATION_AVAILABLE:
+                from natural_conversation import generate_llm_response
+                
+                messages = [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_question}
+                ]
+                
+                # Use preset temperature if available
+                temperature = config.final_tone_config.get('temperature', 0.3)
+                response = generate_llm_response(
+                    messages,
+                    model=getattr(config, 'model', 'gpt-4o-mini'),
+                    temperature=temperature,
+                    max_tokens=500
+                )
+                
+                return response if response else "I couldn't generate a response. Please try asking your question differently."
+            else:
+                # Fallback: return knowledge directly without LLM enhancement
+                return f"Here's what I found:\n\n{knowledge_context}\n\nDoes this answer your question?"
+                
+        except Exception as e:
+            print(f"Error handling knowledge question: {e}")
+            import traceback
+            traceback.print_exc()
+            # Fallback to basic help
+            return "I'm having trouble accessing detailed information right now. For basic help, try 'help' or continue with your application."
     
     def _get_field_help(self, field: str) -> str:
         """Provide detailed help for specific fields"""
