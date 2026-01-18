@@ -1262,6 +1262,9 @@ elif current_state == 'complete':
                     if hasattr(logger, 'log_task_event'):
                         logger.log_task_event("why_triggered")
                 response = st.session_state.loan_assistant.handle_message("explain")
+                # Log the explanation response
+                if logger:
+                    logger.log_interaction("assistant_response", {"content": response})
                 st.session_state.chat_history.append(("explain", response))
                 st_rerun()
         with col2:
@@ -1283,6 +1286,9 @@ elif current_state == 'complete':
                 if hasattr(logger, 'log_task_event'):
                     logger.log_task_event("why_triggered")
             response = st.session_state.loan_assistant.handle_message("explain")
+            # Log the explanation response
+            if logger:
+                logger.log_interaction("assistant_response", {"content": response})
             st.session_state.chat_history.append(("explain", response))
             st_rerun()
 
