@@ -181,99 +181,56 @@ def _get_loan_validators() -> List[Callable]:
 # ---------- AnthroKit-aligned prompts ----------
 def _build_system_prompt(preset: Optional[Dict[str, Any]] = None, high_anthropomorphism: bool = True) -> str:
     """
-    Build system prompt for loan domain.
-    Falls back to hardcoded prompts if preset not provided.
+    Build system prompt for loan domain using AnthroKit.
     
     Args:
-        preset: Optional final tone configuration (personality-adjusted)
-        high_anthropomorphism: If True, warm Luna style. If False, professional AI Assistant style.
+        preset: Final tone configuration (personality-adjusted). If None, loads from config.
+        high_anthropomorphism: DEPRECATED - only used for legacy fallback if config unavailable
     
     Returns:
-        Complete system prompt
+        Complete system prompt from AnthroKit
     """
-    # Try AnthroKit prompts if preset provided
-    if preset is not None:
+    # Get preset from config if not provided
+    if preset is None:
         try:
-            from anthrokit.prompts import build_loan_system_prompt
-            return build_loan_system_prompt(
-                preset=preset,
-                domain_context="credit pre-assessment"
-            )
-        except Exception:
-            pass  # Fall through to hardcoded prompts
+            from ab_config import config
+            preset = getattr(config, 'final_tone_config', None)
+            print(f"✅ DEBUG: Loaded preset from config (anthro={getattr(config, 'anthro', 'unknown')})")
+        except (ImportError, AttributeError):
+            print("⚠️ WARNING: Could not load config - using legacy fallback")
+            pass
     
-    # Fallback: Hardcoded prompts (original behavior)
-    if high_anthropomorphism:
-        # Luna: Warm, friendly, conversational, actionable, CHATTY
-        return (
-            "You are Luna, a friendly income assessment assistant in a research study. "
-            "This is NOT a real loan application - it's a research study using the Adult Income dataset to predict income levels. "
-            "Be CONVERSATIONAL and engaging - like a knowledgeable friend who loves talking about finance and helping people understand income factors! "
-            "Add relevant context and insights about income factors, employment, education - make it educational and interesting! "
-            "Share brief relevant observations (e.g., 'That's actually a really common situation!' or 'Interestingly, this factor...'). "
-            "Use natural transitions and connectors like 'So here's what I'm seeing...', 'Let me explain...', 'This is interesting because...'. "
-            "Be warm, supportive, and genuinely human - someone who cares about helping them understand their financial profile. "
-            "Write like you're a real person who's passionate about this work, not a robot reading a script. "
-            "Preserve ALL factual content, numbers, and data points exactly. "
-            "CRITICAL: Keep all dollar signs ($), commas in numbers, and 'to' with spaces (e.g., '$5,000.00 to $7,000'). "
-            "Do NOT remove formatting from monetary values or ranges. "
-            "Use 2-3 emojis naturally where they fit the emotional context. "
-            "Be chatty but focused - everything should relate to income prediction, finances, or understanding the assessment. "
-            "Structure with clear formatting (bullets, short paragraphs). Add personality without losing clarity. "
-            "Never add meta-commentary - just speak naturally and directly as Luna would. "
-            "Do not fabricate data. Do not change any numeric values."
-        )
-    else:
-        # AI Assistant: Professional, technical, direct
-        return (
-            "You are a professional AI income assessment system in a research study. "
-            "This is NOT a real loan application - it's a research study using the Adult Income dataset to predict income levels. "
-            "Rewrite this explanation in clear, professional language - direct and informative. "
-            "Write like a knowledgeable system communicating important information. "
-            "Preserve ALL factual content, numbers, and data points exactly. "
-            "CRITICAL: Keep all dollar signs ($), commas in numbers, and 'to' with spaces (e.g., '$5,000.00 to $7,000'). "
-            "Do NOT remove formatting from monetary values or ranges. "
-            "Be direct, clear, and authoritative. No emojis. No casual language. "
-            "CRITICAL: DO NOT format as a letter or memo. NO 'Dear', NO 'Subject:', NO salutations, "
-            "NO closings like 'Sincerely', NO signature blocks, NO [Client's Name] placeholders. "
-            "DO NOT add document-style headers like 'Counterfactual Analysis:', 'Current Decision:', etc. "
-            "If the input already has a section header (like '**Profile Modifications for Approval**'), keep it as-is. "
-            "Start directly with the content. End with the last informational sentence. "
-            "Use technical precision and structured formatting (bullets, numbered lists). "
-            "Keep the original section structure - don't add new sections or reorganize. "
-            "Never add meta-commentary - just provide the professional explanation directly. "
-            "Do not fabricate data. Do not change any numeric values."
-        )
-
-
-def _compose_messages(response: str, context: Optional[Dict[str, Any]], preset: Optional[Dict[str, Any]] = None, high_anthropomorphism: bool = True):
-    """Compose OpenAI messages with personality-driven system prompt.
+    # LEGACY FALLBACK: Create minimal preset if config unavailable
+    # NOTE: This only handles binary high/low, not the full none/low/high system
+    if preset is None:
+        print(f"⚠️ WARNING: Using legacy binary fallback (high_anthropomorphism={high_anthropomorphism})")
+        print("   This does NOT support 'none' anthropomorphism level!")
+        preset = {
+            "self_reference": "I" if high_anthropomorphism else "none",
+            "warmth": 0.70 if high_anthropomorphism else 0.25,
+            "empathy": 0.65 if high_anthropomorphism else 0.15,
+            "formality": 0.30 if high_anthropomorphism else 0.75,
+            "hedging": 0.45 if high_anthropomorphism else 0.35,
+            "emoji": "subtle" if high_anthropomorphism else "none",
+            "temperature": 0.6 if high_anthropomorphism else 0.3
+        }
     
-    Args:
-        response: System response to enhance
-        context: Additional context information
-        preset: Final tone configuration (personality-adjusted)
-        high_anthropomorphism: Legacy parameter (used if preset=None)
-    """
-    sys_prompt = _build_system_prompt(preset=preset, high_anthropomorphism=high_anthropomorphism)
-    ctx_lines = []
-    if context:
-        for k, v in context.items():
-            if v is None:
-                continue
-            ctx_lines.append(f"- {k}: {v}")
-    ctx_blob = "\n".join(ctx_lines) if ctx_lines else "(no extra context)"
-
-    user_prompt = (
-        "Rewrite the following for the end user. Preserve all factual content and numbers.\n\n"
-        f"Context:\n{ctx_blob}\n\n"
-        f"Original:\n{response}\n\n"
-        "Return only the rewritten text."
-    )
-    return [
-        {"role": "system", "content": sys_prompt},
-        {"role": "user", "content": user_prompt},
-    ]
+    # Use AnthroKit prompts (mandatory - this IS the AnthroKit project!)
+    try:
+        from anthrokit.prompts import build_loan_system_prompt
+        print("✅ DEBUG: Successfully imported build_loan_system_prompt from anthrokit.prompts")
+        result = build_loan_system_prompt(
+            preset=preset,
+            domain_context="income assessment research"
+        )
+        print(f"✅ DEBUG: AnthroKit prompt generated successfully ({len(result)} chars)")
+        return result
+    except Exception as e:
+        print(f"❌ CRITICAL: AnthroKit import failed in _build_system_prompt: {e}")
+        print(f"   This should NOT happen - AnthroKit is the main project!")
+        import traceback
+        traceback.print_exc()
+        raise  # Don't silently fall back - raise the error!
 
 
 # ---------- Public helpers ----------
@@ -332,32 +289,34 @@ def handle_meta_question(field: str, user_input: str, preset: Optional[Dict[str,
         if client is None:
             return None
         
-        if high_anthropomorphism:
-            system_prompt = (
-                "You are Luna, a friendly and warm AI loan assistant. The user is asking a question about why "
-                "you need certain information, rather than providing data. Be CONVERSATIONAL and educational! "
-                "Explain warmly why this information matters for income prediction - share interesting insights about how "
-                "lenders evaluate this factor or how it affects creditworthiness. Make it engaging and informative! "
-                "Use 2-3 emojis naturally. Aim for 3-4 sentences that are genuinely interesting and helpful. "
-                "After explaining with personality and context, gently prompt them to provide the information."
-            )
-        else:
-            system_prompt = (
-                "You are Luna, a professional AI loan assistant. The user is asking about why certain information "
-                "is needed. Explain concisely why this field is important for loan assessment. No emojis. "
-                "Keep it to 2-3 sentences. Then prompt for the information."
-            )
+        # Get preset from config if not provided
+        if preset is None:
+            try:
+                from ab_config import config
+                preset = getattr(config, 'final_tone_config', None)
+            except (ImportError, AttributeError):
+                # Fallback for testing without full config
+                preset = {"self_reference": "I" if high_anthropomorphism else "none"}
         
-        field_friendly = field.replace('_', ' ')
-        user_prompt = (
-            f"The user asked: '{user_input}'\n"
-            f"They are responding to a request for their {field_friendly}.\n"
-            f"Explain why we need this information and then ask them to provide it."
+        # Use AnthroKit prompts
+        from anthrokit.prompts import build_meta_question_prompt
+        system_prompt = build_meta_question_prompt(
+            preset=preset,
+            field=field,
+            user_question=user_input
         )
         
+        # Simple user prompt - context already in system prompt
+        user_prompt = f"Generate an explanation for why we need {field.replace('_', ' ')} information."
+        
         model_name = os.getenv("HICXAI_OPENAI_MODEL", "gpt-4o-mini")
-        # Higher temperature for HIGH anthropomorphism = more personality
-        temperature = float(os.getenv("HICXAI_TEMPERATURE", "0.8" if high_anthropomorphism else "0.5"))
+        
+        # Use temperature from preset if available
+        if preset and "temperature" in preset:
+            temperature = preset.get("temperature", 0.3)
+        else:
+            # Fallback temperature
+            temperature = float(os.getenv("HICXAI_TEMPERATURE", "0.8" if high_anthropomorphism else "0.5"))
         
         completion = client.chat.completions.create(
             model=model_name,
@@ -407,60 +366,23 @@ def enhance_validation_message(field: str, user_input: str, expected_format: str
             except (ImportError, AttributeError):
                 pass
         
-        # Build system prompt with personality-adjusted tone instructions
-        if preset:
-            # Use AnthroKit stylizer to generate personality-adjusted tone instructions
-            sys_prompt = _build_system_prompt(preset=preset, high_anthropomorphism=high_anthropomorphism)
-            # Modify for validation context
-            sys_prompt += (
-                "\n\nGenerate a validation message when a user enters invalid input. "
-                "Be helpful and guide them toward the correct format. "
-                "Keep it concise (1-2 sentences). "
-            )
-            
-            warmth = preset.get("warmth", 0.25)
-            empathy = preset.get("empathy", 0.15)
-            
-            # Add personality-specific guidance
-            if warmth > 0.50 or empathy > 0.50:
-                sys_prompt += "Acknowledge their attempt positively and encourage them warmly."
-            else:
-                sys_prompt += "State the correction clearly and professionally."
-        else:
-            # Fallback to old High A / Low A logic
-            if high_anthropomorphism:
-                sys_prompt = (
-                    "You are Luna, a friendly and warm AI loan assistant. Generate a conversational, empathetic validation message "
-                    "when a user enters invalid input. Be encouraging and understanding - acknowledge their attempt positively! "
-                    "Add a brief helpful tip or context (e.g., 'This field is used to...', 'A lot of people...'). "
-                    "Use 2-3 emojis naturally. Aim for 2-3 sentences that feel like a real person helping. "
-                    "Guide them gently and warmly toward the correct format."
-                )
-            else:
-                sys_prompt = (
-                    "You are Luna, a professional AI loan assistant. Generate a clear, concise validation message "
-                    "when a user enters invalid input. Be direct and helpful. No emojis. "
-                    "Keep it to 1-2 sentences. Focus on what the user needs to provide."
-                )
-        
-        user_prompt = (
-            f"The user entered '{user_input}' for the field '{field.replace('_', ' ')}', but this is invalid. "
-            f"Expected format: {expected_format}. "
-            f"This is attempt #{attempt}. "
-            f"Generate a validation message that helps them correct their input."
+        # Use AnthroKit prompts
+        from anthrokit.prompts import build_validation_message_prompt
+        sys_prompt = build_validation_message_prompt(
+            preset=preset,
+            field=field,
+            expected_format=expected_format,
+            attempt=attempt
         )
+        
+        # Simple user prompt - context already in system prompt
+        user_prompt = f"Generate a validation message for invalid input: '{user_input}'"
         
         model_name = os.getenv("HICXAI_OPENAI_MODEL", "gpt-4o-mini")
         
-        # Use temperature from preset with personality boost
+        # Use temperature from preset
         if preset and "temperature" in preset:
-            preset_temp = preset.get("temperature", 0.3)
-            warmth = preset.get("warmth", 0.25)
-            # Boost temperature for high-warmth personalities (optimized from 900-gen experiment)
-            if warmth > 0.50:
-                temperature = min(preset_temp + 0.25, 0.7)
-            else:
-                temperature = preset_temp
+            temperature = preset.get("temperature", 0.3)
         else:
             # Fallback temperature
             temperature = float(os.getenv("HICXAI_TEMPERATURE", "0.8" if high_anthropomorphism else "0.5"))
@@ -501,6 +423,7 @@ def generate_from_data(data: Dict[str, Any], explanation_type: str = "shap",
     try:
         # Use AnthroKit prompt builder (personality-driven)
         from anthrokit.prompts import build_explanation_prompt
+        print("✅ DEBUG: Successfully imported build_explanation_prompt from anthrokit.prompts")
         
         # Get preset if not provided
         if preset is None:
@@ -514,6 +437,7 @@ def generate_from_data(data: Dict[str, Any], explanation_type: str = "shap",
             preset=preset,
             explanation_type=explanation_type
         )
+        print(f"✅ DEBUG: AnthroKit explanation prompt generated successfully ({len(system_prompt)} chars)")
 
         import json
         data_json = json.dumps(data, indent=2, default=str)
