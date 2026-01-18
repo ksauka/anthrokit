@@ -1900,7 +1900,13 @@ class LoanAssistant:
             
             # Generate response using LLM (bounded to provided knowledge + user context)
             if NATURAL_CONVERSATION_AVAILABLE:
-                from natural_conversation import generate_llm_response
+                from natural_conversation import _get_openai_client, _should_use_genai
+                
+                if not _should_use_genai():
+                    # Fallback: return knowledge directly without LLM enhancement
+                    return f"Here's what I found:\n\n{full_context}\n\nDoes this answer your question?"
+                
+                client = _get_openai_client()
                 
                 messages = [
                     {"role": "system", "content": system_prompt},
@@ -1909,24 +1915,47 @@ class LoanAssistant:
                 
                 # Use preset temperature if available
                 temperature = config.final_tone_config.get('temperature', 0.3)
-                response = generate_llm_response(
-                    messages,
-                    model=getattr(config, 'model', 'gpt-4o-mini'),
+                model_name = getattr(config, 'model', 'gpt-4o-mini')
+                
+                completion = client.chat.completions.create(
+                    model=model_name,
+                    messages=messages,
                     temperature=temperature,
-                    max_tokens=600  # Increased for contextual answers
+                    max_tokens=600
                 )
                 
+                response = completion.choices[0].message.content.strip()
                 return response if response else "I couldn't generate a response. Please try asking your question differently."
             else:
                 # Fallback: return knowledge directly without LLM enhancement
                 return f"Here's what I found:\n\n{full_context}\n\nDoes this answer your question?"
                 
         except Exception as e:
-            print(f"Error handling knowledge question: {e}")
+            error_msg = str(e)
+            print(f"❌ ERROR in _handle_knowledge_question: {error_msg}")
             import traceback
             traceback.print_exc()
-            # Fallback to basic help
-            return "I'm having trouble accessing detailed information right now. For basic help, try 'help' or continue with your application."
+            
+            # Return more helpful error message
+            if "openai" in error_msg.lower() or "api" in error_msg.lower():
+                return (f"⚠️ I'm having trouble connecting to the AI service right now.\n\n"
+                       f"**You can still:**\n"
+                       f"• Continue your application (answer the current question)\n"
+                       f"• Say 'review' to see your progress\n"
+                       f"• Say 'restart' to start over")
+            elif "knowledge_base" in error_msg.lower() or "yaml" in error_msg.lower():
+                return (f"⚠️ I'm having trouble loading help information.\n\n"
+                       f"**You can still:**\n"
+                       f"• Continue your application\n"
+                       f"• Say 'review' to check progress\n"
+                       f"Error: {error_msg}")
+            else:
+                return (f"⚠️ Something went wrong with the help system.\n\n"
+                       f"**You can still:**\n"
+                       f"• Continue your application\n"
+                       f"• Say 'review' to see progress\n"
+                       f"• Say 'restart' to start over\n\n"
+                       f"Technical error: {error_msg[:100]}")
     
     def _get_field_help(self, field: str) -> str:
         """Provide detailed help for specific fields"""
